@@ -136,7 +136,7 @@ DEBUG = dwarf-2
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRAINCDIRS = ../../
+EXTRAINCDIRS = ../
 
 
 # Compiler flag to set the C Standard level.
@@ -263,8 +263,7 @@ MATH_LIB = -lm
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRALIBDIRS = ../../			\
-	../
+EXTRALIBDIRS = ../
 
 
 
@@ -434,7 +433,6 @@ hex: $(TARGET).hex
 eep: $(TARGET).eep
 lss: $(TARGET).lss
 sym: $(TARGET).sym
-LIBNAME=lib$(TARGET).a
 lib: $(LIBNAME)
 
 
