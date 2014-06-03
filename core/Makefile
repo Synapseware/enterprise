@@ -1,6 +1,6 @@
 # Hey Emacs, this is a -*- makefile -*-
 #----------------------------------------------------------------------------
-# WinAVR Makefile Template written by Eric B. Weddington, Jörg Wunsch, et al.
+# WinAVR Makefile Template written by Eric B. Weddington, JÃ¶rg Wunsch, et al.
 #
 # Released to the Public Domain
 #
@@ -94,14 +94,14 @@ SHARED = ../libs
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c								\
-	effects.c									\
-	drivers/nacelle.c							\
-	$(SHARED)/events/events.c					\
-	$(SHARED)/drivers/at24c/at24c.c				\
-	$(SHARED)/serialeeprom/serialeeprom.c		\
-	$(SHARED)/twi/i2c.c							\
-	$(SHARED)/spi/spi.c							\
+SRC = enterprise.c			                    \
+	effects.c     			                    \
+	drivers/nacelle.c     			            \
+	$(SHARED)/events/events.c                   \
+	$(SHARED)/drivers/at24c/at24c.c             \
+	$(SHARED)/serialeeprom/serialeeprom.c       \
+	$(SHARED)/twi/i2c.c                         \
+	$(SHARED)/spi/spi.c                         \
 	$(SHARED)/uart/uart.c
 
 
@@ -154,6 +154,7 @@ CDEFS += -DBAUD=57600
 CDEFS += -DMAX_EVENT_RECORDS=24
 CDEFS += -DSPI_CLK_4
 CDEFS += -DBoard_Enterprise
+
 
 # Place -D or -U options here for ASM sources
 ADEFS = -DF_CPU=$(F_CPU)
@@ -303,7 +304,7 @@ LDFLAGS += $(LIBS)
 AVRDUDE_PROGRAMMER = stk500
 
 # com1 = serial port. Use lpt1 to connect to parallel port.
-AVRDUDE_PORT = com1    # programmer connected to serial device
+AVRDUDE_PORT = com6    # programmer connected to serial device
 
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 #AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
