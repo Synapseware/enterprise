@@ -1,0 +1,5 @@
+/m single /o text "C:\Synapseware\electronics\enterprise\core\effects\samples\background-engine-2.wav"
+
+/m stitch "C:\Synapseware\electronics\enterprise\core\effects\samples\ambient\startrek.bin"
+
+/m upload "C:\Synapseware\electronics\enterprise\core\effects\samples\ambient\startrek.bin"

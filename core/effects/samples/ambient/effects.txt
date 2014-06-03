@@ -1,0 +1,150 @@
+wavutil v1.00 by Matthew Potter
+Found 16 files
+Processing source file ambient-1.wav
+        Signature (XX): a1
+Processing source file ambient-2.wav
+        Signature (XX): a2
+Processing source file ambient-3.wav
+        Signature (XX): a3
+Processing source file ambient-4.wav
+        Signature (XX): a4
+Processing source file ambient-5.wav
+        Signature (XX): a5
+Processing source file effect-hailing-call.wav
+        Signature (XX): hc
+Processing source file effect-ping-down.wav
+        Signature (XX): pd
+Processing source file effect-ping-up.wav
+        Signature (XX): pu
+Processing source file effect-red-alert.wav
+        Signature (XX): ra
+Processing source file effect-tribble.wav
+        Signature (XX): tt
+Processing source file voice-bones-doctor.wav
+        Signature (XX): bd
+Processing source file voice-bridge-to-captain-kirk.wav
+        Signature (XX): bc
+Processing source file voice-kirk-beam-me-up-scotty.wav
+        Signature (XX): ks
+Processing source file voice-scotty-ayesir.wav
+        Signature (XX): sa
+Processing source file voice-scotty-calling-kirk.wav
+        Signature (XX): sk
+Processing source file voice-spock-fasinating.wav
+        Signature (XX): sf
+Generating output file...
+-----------------------------------------------------------------
+0x0004 Signature:       0x6131  a1
+0x0006 Start Page:      0x0001 (1)
+0x000A Length:          0x06EE (1774)
+0x000C Sample Rate:     0x1F40 (8000)
+0x0100 Data Start:      0x0100 (256)
+0x07EE Sample Length:   1774
+-----------------------------------------------------------------
+0x000E Signature:       0x6132  a2
+0x0010 Start Page:      0x0008 (8)
+0x0014 Length:          0x1400 (5120)
+0x0016 Sample Rate:     0x1F40 (8000)
+0x0800 Data Start:      0x0800 (2048)
+0x1C00 Sample Length:   5120
+-----------------------------------------------------------------
+0x0018 Signature:       0x6133  a3
+0x001A Start Page:      0x001C (28)
+0x001E Length:          0x1029 (4137)
+0x0020 Sample Rate:     0x1F40 (8000)
+0x1C00 Data Start:      0x1C00 (7168)
+0x2C29 Sample Length:   4137
+-----------------------------------------------------------------
+0x0022 Signature:       0x6134  a4
+0x0024 Start Page:      0x002D (45)
+0x0028 Length:          0x15D0 (5584)
+0x002A Sample Rate:     0x1F40 (8000)
+0x2D00 Data Start:      0x2D00 (11520)
+0x42D0 Sample Length:   5584
+-----------------------------------------------------------------
+0x002C Signature:       0x6135  a5
+0x002E Start Page:      0x0043 (67)
+0x0032 Length:          0x1173 (4467)
+0x0034 Sample Rate:     0x1F40 (8000)
+0x4300 Data Start:      0x4300 (17152)
+0x5473 Sample Length:   4467
+-----------------------------------------------------------------
+0x0036 Signature:       0x6863  hc
+0x0038 Start Page:      0x0055 (85)
+0x003C Length:          0x2605 (9733)
+0x003E Sample Rate:     0x1F40 (8000)
+0x5500 Data Start:      0x5500 (21760)
+0x7B05 Sample Length:   9733
+-----------------------------------------------------------------
+0x0040 Signature:       0x7064  pd
+0x0042 Start Page:      0x007C (124)
+0x0046 Length:          0x2F6E (12142)
+0x0048 Sample Rate:     0x1F40 (8000)
+0x7C00 Data Start:      0x7C00 (31744)
+0xAB6E Sample Length:   12142
+-----------------------------------------------------------------
+0x004A Signature:       0x7075  pu
+0x004C Start Page:      0x00AC (172)
+0x0050 Length:          0x348C (13452)
+0x0052 Sample Rate:     0x1F40 (8000)
+0xAC00 Data Start:      0xAC00 (44032)
+0xE08C Sample Length:   13452
+-----------------------------------------------------------------
+0x0054 Signature:       0x7261  ra
+0x0056 Start Page:      0x00E1 (225)
+0x005A Length:          0x1D0E (7438)
+0x005C Sample Rate:     0x1F40 (8000)
+0xE100 Data Start:      0xE100 (57600)
+0xFE0E Sample Length:   7438
+-----------------------------------------------------------------
+0x005E Signature:       0x7474  tt
+0x0060 Start Page:      0x00FF (255)
+0x0064 Length:          0x1AEC (6892)
+0x0066 Sample Rate:     0x1F40 (8000)
+0xFF00 Data Start:      0xFF00 (65280)
+0x119EC Sample Length:   6892
+-----------------------------------------------------------------
+0x0068 Signature:       0x6264  bd
+0x006A Start Page:      0x011A (282)
+0x006E Length:          0x2F85 (12165)
+0x0070 Sample Rate:     0x1F40 (8000)
+0x11A00 Data Start:      0x11A00 (72192)
+0x14985 Sample Length:   12165
+-----------------------------------------------------------------
+0x0072 Signature:       0x6263  bc
+0x0074 Start Page:      0x014A (330)
+0x0078 Length:          0x2A84 (10884)
+0x007A Sample Rate:     0x1F40 (8000)
+0x14A00 Data Start:      0x14A00 (84480)
+0x17484 Sample Length:   10884
+-----------------------------------------------------------------
+0x007C Signature:       0x6B73  ks
+0x007E Start Page:      0x0175 (373)
+0x0082 Length:          0x2A4C (10828)
+0x0084 Sample Rate:     0x1F40 (8000)
+0x17500 Data Start:      0x17500 (95488)
+0x19F4C Sample Length:   10828
+-----------------------------------------------------------------
+0x0086 Signature:       0x7361  sa
+0x0088 Start Page:      0x01A0 (416)
+0x008C Length:          0x0B45 (2885)
+0x008E Sample Rate:     0x1F40 (8000)
+0x1A000 Data Start:      0x1A000 (106496)
+0x1AB45 Sample Length:   2885
+-----------------------------------------------------------------
+0x0090 Signature:       0x736B  sk
+0x0092 Start Page:      0x01AC (428)
+0x0096 Length:          0x29EA (10730)
+0x0098 Sample Rate:     0x1F40 (8000)
+0x1AC00 Data Start:      0x1AC00 (109568)
+0x1D5EA Sample Length:   10730
+-----------------------------------------------------------------
+0x009A Signature:       0x7366  sf
+0x009C Start Page:      0x01D6 (470)
+0x00A0 Length:          0x1371 (4977)
+0x00A2 Sample Rate:     0x1F40 (8000)
+0x1D600 Data Start:      0x1D600 (120320)
+0x1E971 Sample Length:   4977
+-------------------------------------------
+Bytes Used: 125440
+Pages Used: 490
