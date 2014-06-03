@@ -1,0 +1,53 @@
+programming device...
+	avrdude -c usbtiny -p t2313 -B 1 -U flash:w:.\default\nacelle-asm.hex
+	
+	avrdude -c usbtiny -p t2313 -B 1 -U eeprom:w:.\default\nacelle-asm.eep
+
+reading fuses...
+	avrdude -c usbtiny -p t2313 -B 1 -U hfuse:r:.\high.txt:h -U lfuse:r:.\low.txt:h -U efuse:r:.\ext.txt:h
+
+writing fuses...
+
+(ext crystal, preserve eeprom)
+	avrdude -c usbtiny -p t2313 -B 8 -U lfuse:w:0xff:m -U hfuse:w:0x9f:m -U efuse:w:0xff:m
+
+
+
+Nacelle Board pinout (facing up, pins down, L-R)
+1 - MOSI/SDA
+2 - MISO
+3 - SCK/SCL
+4 - Pwr
+5 - GND
+6 = Reset
+
+
+Set standard rotation pattern:
+[0x6a 0xf0 255 63 31 15 7 0 0 0 255 63 31 15 7 0 0 0]
+
+Set alternate rotation pattern:
+[0x6a 0xf0 255 63 31 15 7 0 0 0 0 0 0 0 0 0 0 0]
+
+Set single light rotation pattern:
+[0x6a 0xf0 255 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+
+Set double light rotation pattern:
+[0x6a 0xf0 255 0 0 0 0 0 0 0 255 0 0 0 0 0 0 0]
+
+Save rotation pattern
+[0x6a 0xf1]
+
+Set default rotation speed
+[0x6a 0x80 0x04 0xb0]
+
+Set fast rotation speed
+[0x6a 0x80 0x01 0x00]
+
+Set slow rotation speed
+[0x6a 0x80 0x10 0x00]
+
+Set direction left
+[0x6a 0x40 0xff]
+
+Set direction right
+[0x6a 0x40 0x00]

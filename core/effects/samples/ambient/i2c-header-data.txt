@@ -1,0 +1,289 @@
+16		- sample count
+16		* (bad data, should be 0)
+
+
+a		SIGNATURE		ambient 1						OK
+1
+1		start page		0x0001		1
+0
+238		length + 4		0x06EE		1,774
+6
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+a		SIGNATURE		ambient 2						OK
+2
+8		start page		0x0008		8
+0
+0		length + 4		0x1400		5,120
+20
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+a		SIGNATURE		ambient 3						ERROR
+3
+28		start page		0x001C		28
+0
+41		length + 4		0x1C1029	1,839,145			BAD LENGTH (0x1029	4,137)
+16
+28
+0
+64		rate			0x1F40		8,000
+31
+
+
+a		SIGNATURE		ambient 4						OK
+4
+45		start page		0x002D		45
+0
+208		length + 4		0x15D0		5,584
+21
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+a		SIGNATURE		ambient 5						ERROR
+5
+67		start page		0x2D43		11,587				BAD START PAGE (0x0043	67)
+45
+115		length + 4		0x1173		4,467
+17
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+h		SIGNATURE		hailing call					OK
+c
+85		start page		0x0055		85
+0
+5		length + 4		0x2605		9,733
+38
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+p		SIGNATURE		ping down						OK
+d
+124		start page		0x007C		124
+0
+110		length + 4		0x2F6E		12,142
+47
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+p		SIGNATURE		ping up							ERROR
+u
+172		start page		0x00AC		172
+0
+140		length + 4		0x0404		1,028				BAD LENGTH (0x348C	13,452)
+4
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+r		SIGNATURE		red alert						OK
+a
+225		start page		0x00E1		225
+0
+14		length + 4		0x1D0E		7,438
+29
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+t		SIGNATURE		tribbles						OK
+t
+255		start page		0x00FF		255
+0
+236		length + 4		0x1AEC		6,892
+26
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+b		SIGNATURE		bones doctor					OK
+d
+26		start page		0x011A		282
+1
+133		length + 4		0x2F85		12,165
+47
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+b		SIGNATURE		bridge to kirk					OK
+c
+74		start page		0x014A		330
+1
+132		length + 4		0x2A84		10,884
+42
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+k		SIGNATURE		kirk beam up					OK
+s
+117		start page		0x0175		373
+1		
+76		length + 4		0x2A4C		10,828
+42
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+s		SIGNATURE		scotty aye sir					OK
+a
+160		start page		0x01A0		416
+1
+69		length + 4		0x0B45		2,885
+11
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+s		SIGNATURE		scotty to kirk					OK
+k
+172		start page		0x01AC		428
+1
+234		length + 4		0x29EA		10,730
+41
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+s		SIGNATURE		spock fasinating				ERROR
+f
+214		start page		0x01D6		470
+1
+81		length + 4		0x1351		4,945				BAD LENGTH (0x1371	4,977)
+19
+0
+0
+64		rate			0x1F40		8,000
+31
+
+
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
