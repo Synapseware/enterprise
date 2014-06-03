@@ -90,14 +90,13 @@ OBJDIR = .
 
 
 #Library directory
-LIBS_DIR = ../../libs
+LIBS_DIR = ../libs
 
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c								\
 	effects.c									\
 	drivers/nacelle.c							\
-	enterprise.c								\
 	$(LIBS_DIR)/events/events.c					\
 	$(LIBS_DIR)/drivers/at24c/at24c.c			\
 	$(LIBS_DIR)/serialeeprom/serialeeprom.c		\
