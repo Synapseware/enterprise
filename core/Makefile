@@ -89,20 +89,20 @@ TARGET = enterprise
 OBJDIR = .
 
 
-#Library directory
-LIBS_DIR = ../libs
+# Shared source code
+SHARED = ../libs
 
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(TARGET).c								\
 	effects.c									\
 	drivers/nacelle.c							\
-	$(LIBS_DIR)/events/events.c					\
-	$(LIBS_DIR)/drivers/at24c/at24c.c			\
-	$(LIBS_DIR)/serialeeprom/serialeeprom.c		\
-	$(LIBS_DIR)/twi/i2c.c						\
-	$(LIBS_DIR)/spi/spi.c						\
-	$(LIBS_DIR)/uart/uart.c
+	$(SHARED)/events/events.c					\
+	$(SHARED)/drivers/at24c/at24c.c				\
+	$(SHARED)/serialeeprom/serialeeprom.c		\
+	$(SHARED)/twi/i2c.c							\
+	$(SHARED)/spi/spi.c							\
+	$(SHARED)/uart/uart.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -136,7 +136,7 @@ DEBUG = dwarf-2
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRAINCDIRS = ../
+EXTRAINCDIRS = ../ $(SHARED)
 
 
 # Compiler flag to set the C Standard level.
@@ -185,8 +185,8 @@ CFLAGS += -Wstrict-prototypes
 #CFLAGS += -mshort-calls
 #CFLAGS += -fno-unit-at-a-time
 #CFLAGS += -Wundef
-#CFLAGS += -Wunreachable-code
-#CFLAGS += -Wsign-compare
+CFLAGS += -Wunreachable-code
+CFLAGS += -Wsign-compare
 CFLAGS += -Wa,-adhlns=$(<:%.c=$(OBJDIR)/%.lst)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)
@@ -263,7 +263,7 @@ MATH_LIB = -lm
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRALIBDIRS = ../
+EXTRALIBDIRS = $(SHARED)
 
 
 
@@ -289,6 +289,7 @@ LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
 LDFLAGS += $(EXTMEMOPTS)
 LDFLAGS += $(patsubst %,-L%,$(EXTRALIBDIRS))
 LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
+LDFLAGS += $(LIBS)
 #LDFLAGS += -T linker_script.x
 
 
@@ -299,7 +300,7 @@ LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
 # Type: avrdude -c ?
 # to get a full listing.
 #
-AVRDUDE_PROGRAMMER = stk500v2
+AVRDUDE_PROGRAMMER = stk500
 
 # com1 = serial port. Use lpt1 to connect to parallel port.
 AVRDUDE_PORT = com1    # programmer connected to serial device
@@ -417,7 +418,13 @@ ALL_CPPFLAGS = -mmcu=$(MCU) -I. -x c++ $(CPPFLAGS) $(GENDEPFLAGS)
 ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
-
+#export MCU
+#export F_CPU
+#export OPT
+#export EVENT_FREQ
+#export MAX_EVENT_RECORDS
+#export TWI_SPEED BAUD
+#include ../libs/makefile
 
 
 # Default target.
@@ -433,6 +440,7 @@ hex: $(TARGET).hex
 eep: $(TARGET).eep
 lss: $(TARGET).lss
 sym: $(TARGET).sym
+LIBNAME=lib$(TARGET).a
 lib: $(LIBNAME)
 
 
@@ -450,8 +458,8 @@ end:
 
 
 # Display size of file.
-HEXSIZE = $(SIZE) --target=$(FORMAT) $(TARGET).hex
-ELFSIZE = $(SIZE) --mcu=$(MCU) --format=avr $(TARGET).elf
+HEXSIZE = $(SIZE) $(TARGET).hex
+ELFSIZE = $(SIZE) $(TARGET).elf
 
 sizebefore:
 	@if test -f $(TARGET).elf; then echo; echo $(MSG_SIZE_BEFORE); $(ELFSIZE); \
@@ -477,7 +485,6 @@ program: $(TARGET).hex $(TARGET).eep
 # Write fuse values
 wfuses:
 	$(AVRDUDE) $(AVRDUDE_FLAGS) -U lfuse:w:$(L_FUSE):m -U hfuse:w:$(H_FUSE):m -U efuse:w:$(E_FUSE):m
-
 
 # Read fuse values
 rfuses:
