@@ -445,7 +445,7 @@ void sfx_init(void)
 	TCCR2B	= (1<<CS20);
 
 	// initialize the eeprom hardware
-	ee_init();
+	ee_init(TWI_SPEED);
 
 	// load the header data
 	_fillHeader();
