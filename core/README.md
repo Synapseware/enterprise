@@ -4,27 +4,27 @@ core
 ### Core processing
 
 The core is responsible for:
-	- Sending new lighting effects to the Nacelle's for storage via EEPROM
-	- Sound?
-	- Some lighting effects
-	- USB interface?
+  - Sending new lighting effects to the Nacelle's for storage via EEPROM
+  - Sound?
+  - Some lighting effects
+  - USB interface?
 
 Unsupported functionality:
-	- Processing battery level
-	- Uploading new firmware to subordinate processors
+  - Processing battery level
+  - Uploading new firmware to subordinate processors
 
 
 The system consists of the following 4 boards:
-	- Power & USB board
-		* charging LiPo battery
-		* USB to COM port
-		* 5V boost/regulator
-	- Main CPU board
-		* Main CPU
-		* core lighting effects support
-		* sound effects & speaker driver
-	- Nacelle boards (2 total)
-		* nacelle lighting effects
+  - Power & USB board
+    * charging LiPo battery
+    * USB to COM port
+    * 5V boost/regulator
+  - Main CPU board
+    * Main CPU
+    * core lighting effects support
+    * sound effects & speaker driver
+  - Nacelle boards (2 total)
+    * nacelle lighting effects
 
 The power & USB board provides communications for the system via a USB to virtual COM port driver chip, as well as a 5V boost/regulator for powering the CPU's.  The board has 6 outputs, 2 for serial RX & TX, USB power, 5V boost, raw battery line and ground.  The connector is meant to mate to the main board so that the main board can receive power and communications lines without the risk of a highly complicated system board.
 
