@@ -55,23 +55,6 @@ E_FUSE = 0xFF
 
 
 # Processor frequency.
-#     This will define a symbol, F_CPU, in all source code files equal to the 
-#     processor frequency. You can then use this symbol in your source code to 
-#     calculate timings. Do NOT tack on a 'UL' at the end, this will be done
-#     automatically to create a 32-bit value in your source code.
-#     Typical values are:
-#         F_CPU =  1000000
-#         F_CPU =  1843200
-#         F_CPU =  2000000
-#         F_CPU =  3686400
-#         F_CPU =  4000000
-#         F_CPU =  7372800
-#         F_CPU =  8000000
-#         F_CPU = 11059200
-#         F_CPU = 14745600
-#         F_CPU = 16000000
-#         F_CPU = 18432000
-#         F_CPU = 20000000
 F_CPU = 20000000
 
 
@@ -90,19 +73,18 @@ OBJDIR = .
 
 
 # Shared source code
-SHARED = ../libs
+LIBSDIR = ../libs
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = enterprise.c			                    \
-	effects.c     			                    \
-	drivers/nacelle.c     			            \
-	$(SHARED)/events/events.c                   \
-	$(SHARED)/drivers/at24c/at24c.c             \
-	$(SHARED)/serialeeprom/serialeeprom.c       \
-	$(SHARED)/twi/i2c.c                         \
-	$(SHARED)/spi/spi.c                         \
-	$(SHARED)/uart/uart.c
+SRC = $(TARGET).c			                     \
+	effects.c     			                     \
+	$(LIBSDIR)/events/events.c                   \
+	$(LIBSDIR)/drivers/at24c/at24c.c             \
+	$(LIBSDIR)/sermem/sermem.c			         \
+	$(LIBSDIR)/twi/i2c.c                         \
+	$(LIBSDIR)/spi/spi.c                         \
+	$(LIBSDIR)/uart/uart.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -136,7 +118,7 @@ DEBUG = dwarf-2
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRAINCDIRS = ../ $(SHARED)
+EXTRAINCDIRS = $(LIBSDIR)
 
 
 # Compiler flag to set the C Standard level.
@@ -264,7 +246,7 @@ MATH_LIB = -lm
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRALIBDIRS = $(SHARED)
+EXTRALIBDIRS = $(LIBSDIR)
 
 
 
@@ -301,7 +283,7 @@ LDFLAGS += $(LIBS)
 # Type: avrdude -c ?
 # to get a full listing.
 #
-AVRDUDE_PROGRAMMER = stk500
+AVRDUDE_PROGRAMMER = stk500v2
 
 # com1 = serial port. Use lpt1 to connect to parallel port.
 AVRDUDE_PORT = com6    # programmer connected to serial device
@@ -419,21 +401,11 @@ ALL_CPPFLAGS = -mmcu=$(MCU) -I. -x c++ $(CPPFLAGS) $(GENDEPFLAGS)
 ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
-#export MCU
-#export F_CPU
-#export OPT
-#export EVENT_FREQ
-#export MAX_EVENT_RECORDS
-#export TWI_SPEED BAUD
-#include ../libs/makefile
-
-
 # Default target.
 all: begin gccversion sizebefore build sizeafter end
 
 # Change the build target to build a HEX file or a library.
 build: elf hex eep lss sym
-#build: lib
 
 
 elf: $(TARGET).elf
@@ -441,9 +413,6 @@ hex: $(TARGET).hex
 eep: $(TARGET).eep
 lss: $(TARGET).lss
 sym: $(TARGET).sym
-LIBNAME=lib$(TARGET).a
-lib: $(LIBNAME)
-
 
 
 # Eye candy.
@@ -489,7 +458,7 @@ wfuses:
 
 # Read fuse values
 rfuses:
-	$(AVRDUDE) $(AVRDUDE_FLAGS) -U hfuse:r:.\high.txt:h -U lfuse:r:.\low.txt:h -U efuse:r:.\ext.txt:h
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U hfuse:r:./high.txt:h -U lfuse:r:./low.txt:h -U efuse:r:./ext.txt:h
 
 
 # Generate avr-gdb config/init file which does the following:
@@ -568,8 +537,6 @@ extcoff: $(TARGET).elf
 	@echo
 	@echo $(MSG_SYMBOL_TABLE) $@
 	$(NM) -n $< > $@
-
-
 
 # Create library from object files.
 .SECONDARY : $(TARGET).a

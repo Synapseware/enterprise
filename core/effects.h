@@ -6,9 +6,9 @@
 #include <avr/eeprom.h>
 
 #include "board.h"
-#include <libs/events/events.h>
-#include <libs/uart/uart.h>
-#include <libs/drivers/at24c/at24c.h>
+#include <events/events.h>
+#include <uart/uart.h>
+#include <drivers/at24c/at24c.h>
 
 #include "enterprise.h"
 

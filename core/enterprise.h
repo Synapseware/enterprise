@@ -10,9 +10,9 @@
 #include <avr/pgmspace.h>
 #include <types.h>
 
-#include <libs/events/events.h>
-#include <libs/uart/uart.h>
-#include <libs/serialeeprom/serialeeprom.h>
+#include <events/events.h>
+#include <uart/uart.h>
+#include <sermem/sermem.h>
 
 #include "effects.h"
 

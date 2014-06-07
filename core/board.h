@@ -58,8 +58,8 @@
 #define LED_DBG_DDR			DDRC
 #define LED_DBG_LINE		PORTC3
 
-#define dbg_led_off()		sbi(LED_DBG_PORT, LED_DBG_LINE)
-#define dbg_led_on()		cbi(LED_DBG_PORT, LED_DBG_LINE)
+#define dbg_led_off()		LED_DBG_PORT |= (1<<LED_DBG_LINE)
+#define dbg_led_on()		LED_DBG_PORT &= ~(1<<LED_DBG_LINE)
 #define dbg_led_en()		LED_DBG_DDR |= (1<<LED_DBG_LINE)
 
 
