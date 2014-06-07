@@ -1,6 +1,7 @@
-/core
+core
+====
 
-Core processing
+### Core processing
 
 The core is responsible for:
 	- Sending new lighting effects to the Nacelle's for storage via EEPROM
@@ -30,7 +31,7 @@ The power & USB board provides communications for the system via a USB to virtua
 The main CPU board has a single ATMega328P micro-controller (uC) which drives the sound effects, core lighting effects and is able to communicate with the nacelle driver boards via I2C.
 
 
-Board Details:
+### Board Details
 
 	Power Board pinout (facing up, pins down, L-R)
 	1 - RX
