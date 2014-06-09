@@ -1,4 +1,8 @@
 #include <avr/io.h>
+;#include <drivers/stp16cp05/stp16cp05.S>
+;#include <drivers/usitwi.S>
+;#include <drivers/eeprom.S>
+
 
 ;
 ; ********************************************
@@ -7,91 +11,63 @@
 ; * (C)2011 by [Matthew Potter]              *
 ; ********************************************
 ;
-; Included header file for target AVR type
-.NOLIST
-.INCLUDE "tn2313def.inc" ; Header for ATTINY2313
-.LIST
 
 
 ; ================================================================================================
 ;   R E G I S T E R   D E F I N I T I O N S
 ; ================================================================================================
-.DEF    rmp                     = r16
-.DEF    rtmp                    = r17
+rmp                     = 16
+rtmp                    = 17
 
 
 ; ================================================================================================
 ;   C O N S T A N T S
 ; ================================================================================================
-.EQU    TIMER0_DELAY            = 9
-.EQU    TIMER1_DELAY            = 600
+TIMER0_DELAY            = 9
+TIMER1_DELAY            = 600
 
 ;   Command bytes:
-.EQU    GET_NEW_ON_VALUES       = 0xF0
-.EQU    COMMIT_ON_VALUES        = 0xF1
-.EQU    UPDATE_ROTATE_SPD       = 0x80
-.EQU    UPDATE_ROTATE_DIR       = 0x40
+GET_NEW_ON_VALUES       = 0xF0
+COMMIT_ON_VALUES        = 0xF1
+UPDATE_ROTATE_SPD       = 0x80
+UPDATE_ROTATE_DIR       = 0x40
 
 ; -------------------------------------------------
 ; Constants for usitwi.asm
-.EQU    ATTINY2313              = 1
-.EQU    TW_ADDRESS              = 0x6A
-
+ATTINY2313              = 1
+TW_ADDRESS              = 0x6A
 
 ; ================================================================================================
 ;   D A T A  S E G M E N T
 ; ================================================================================================
-.DSEG
-    
+.data
 
 ; ================================================================================================
 ;  E E P R O M  S E G M E N T
 ; ================================================================================================
-.ESEG
-    .ORG $0000
-    ;EE_TABLE_DATA:     .DB     255, 63, 31, 15, 7, 0, 0, 0, 255, 63, 31, 15, 7, 0, 0, 0, 255, 63, 31, 15, 7, 0, 0, 0, 255, 63, 31, 15, 7, 0, 0, 0
-    EE_TABLE_DATA:      .DB     0, 7, 15, 31, 63, 255, 200, 150, 120, 90, 70, 50, 30, 20, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-                                
+.ORG 0x0000
+.eeprom
+EE_TABLE_DATA           = { 0, 7, 15, 31, 63, 255, 200, 150, 120, 90, 70, 50, 30, 20, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
 ; ================================================================================================
-;   R E S E T   A N D   I N T   V E C T O R S
+;  C O D E  S E G M E N T
 ; ================================================================================================
-.CSEG
-.ORG $0000
-    rjmp Main                   ; 1 - RESET
-    reti                        ; 2 - INT0
-    reti                        ; 3 - INT1
-    reti                        ; 4 - TIMER1 CAPT
-    rjmp ISR_TimerCompare1A     ; 5 - TIMER1 COMPA
-    reti                        ; 6 - TIMER1 OVF
-    reti                        ; 7 - TIMER0 OVF
-    reti                        ; 8 - USART0, RX
-    reti                        ; 9 - USART0, UDRE
-    reti                        ; 10 - USART0, TX
-    reti                        ; 11 - ANALOG COMP
-    reti                        ; 12 - PCINT
-    reti                        ; 13 - TIMER1 COMPB
-    rjmp ISR_TimerCompare0A     ; 14 - TIMER0 COMPA
-    reti                        ; 15 - TIMER0 COMPB
-    rjmp ISR_USIStart           ; 16 - USI START
-    rjmp ISR_USIOverflow        ; 17 - USI OVERFLOW
-    reti                        ; 18 - EE READY
-    reti                        ; 19 - WDT OVERFLOW
-
+.cseg
 
 ; ================================================================================================
 ; Timer0, compare A handler
 ; Calls the PWM Channel Driver for processing the next LED
 ; ================================================================================================
-ISR_TimerCompare0A:
+.global TIMER0_COMPA_vect
+TIMER0_COMPA_vect:
     push    rmp
-    in      rmp, SREG
+    in      rmp, _SFR_IO_ADDR(SREG)
     push    rmp
 
     rcall   STP16_Refresh
 
     pop     rmp
-    out     SREG, rmp
+    out     _SFR_IO_ADDR(SREG), rmp
     pop     rmp
     reti
 
@@ -100,15 +76,16 @@ ISR_TimerCompare0A:
 ; Timer1, compare A handler
 ; Increments the offset value
 ; ================================================================================================
-ISR_TimerCompare1A:
+.global TIMER1_COMPA_vect
+TIMER1_COMPA_vect:
     push    rmp
-    in      rmp, SREG
+    in      rmp, _SFR_IO_ADDR(SREG)
     push    rmp
 
     rcall   STP16_UpdateOffset
 
     pop     rmp
-    out     SREG, rmp
+    out     _SFR_IO_ADDR(SREG), rmp
     pop     rmp
     reti
 
@@ -116,6 +93,7 @@ ISR_TimerCompare1A:
 ; ================================================================================================
 ; Main
 ; ================================================================================================
+.global main
 Main:
     ldi     rmp, LOW(RAMEND)            ; Init LSB stack
     out     SPL, rmp
@@ -269,10 +247,4 @@ _init_cont:
     clr     r20
 
     ret
-
-
-.INCLUDE "stp16cp05.asm"
-.INCLUDE "usitwi.asm"
-.INCLUDE "eeprom.asm"
-
 

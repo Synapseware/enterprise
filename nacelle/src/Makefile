@@ -63,7 +63,7 @@ FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = enterprise
+TARGET = nacelle
 
 
 # Object files directory
@@ -73,7 +73,7 @@ OBJDIR = .
 
 
 # Shared source code
-LIBSDIR = ../libs
+LIBSDIR = ../../libs
 
 
 # List C source files here. (C dependencies are automatically generated.)
@@ -91,7 +91,7 @@ CPPSRC =
 #     Even though the DOS/Win* filesystem matches both .s and .S the same,
 #     it will preserve the spelling of the filenames, and gcc itself does
 #     care about how the name is spelled on its command-line.
-ASRC = nacelle.S
+ASRC = $(TARGET).S
 
 
 # Optimization level, can be [0, 1, 2, 3, s]. 
@@ -124,11 +124,6 @@ CSTANDARD = -std=gnu99
 
 # Place -D or -U options here for C sources
 CDEFS = -DF_CPU=$(F_CPU)UL
-CDEFS += -DTWI_SPEED=400
-CDEFS += -DBAUD=57600
-CDEFS += -DMAX_EVENT_RECORDS=24
-CDEFS += -DSPI_CLK_4
-CDEFS += -DBoard_Enterprise
 
 
 # Place -D or -U options here for ASM sources
