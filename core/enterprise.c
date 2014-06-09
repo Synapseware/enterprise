@@ -34,15 +34,18 @@ void receiveCallback(char data)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // processes a communications request from the serial port
-void processCommRequest(char data)
+void processCommRequest()
 {
+	if (!_dataReceived)
+		return;
+
 	uartEndReceive();
 
 	sfx_off();
 
 	_dataReceived = 0;
-	spie_process(data);
-	switch (data & 0x5F)
+	spie_process(_rxData);
+	switch (_rxData & 0x5F)
 	{
 		case 'V':
 			uart_putstrM(PSTR("\r\nVersion: 0.5\r\n"));
@@ -78,6 +81,8 @@ void checkButton(eventState_t state)
 		SWITCH_PCMSK |= (1<<SWITCH_PCINT);
 		return;
 	}
+
+	//TODO: Button debounce
 
 	// shutdown the CPU and all effects
 	sfx_off();
@@ -176,9 +181,8 @@ int main()
 		// process any pending events
 		eventsDoEvents();
 
-		// check for UART/USART data
-		if (_dataReceived)
-			processCommRequest(_rxData);
+		// process any communications data
+		processCommRequest();
 	}
 }
 
@@ -186,6 +190,7 @@ int main()
 // Should be running @ 8.000kHz - this is the event sync driver method
 ISR(TIMER1_COMPA_vect)
 {
+	// trigger event cycle
 	eventSync();
 }
 
