@@ -1,6 +1,4 @@
-
-#include <avr/io.h>
-#include <avr/eeprom.h>
+#include "nacelle.h"
 ;#include <drivers/stp16cp05/stp16cp05.S>
 ;#include <drivers/usitwi.S>
 ;#include <drivers/eeprom.S>
@@ -36,10 +34,6 @@ UPDATE_ROTATE_DIR       = 0x40
 ; Constants for usitwi.asm
 ATTINY2313              = 1
 TW_ADDRESS              = 0x6A
-
-#define work            r16
-#define temp            r17
-#define rEEADDr         r9
 
 
 ; ================================================================================================
@@ -101,7 +95,7 @@ TIMER1_COMPA_vect:
 ; Main
 ; ================================================================================================
 .global main
-Main:
+main:
     ldi     r16, lo8(RAMEND)            ; Init LSB stack
     out     _SFR_IO_ADDR(SPL), r16
 
