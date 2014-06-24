@@ -1,5 +1,6 @@
 #include <avr/io.h>
 #include <avr/eeprom.h>
+#include <drivers/stp16cp05/stp16cp05.h>
 
 // -----------------------------------------------------------------------------
 // Registers

@@ -1,5 +1,4 @@
 #include "nacelle.h"
-;#include <drivers/stp16cp05/stp16cp05.S>
 ;#include <drivers/usitwi.S>
 ;#include <drivers/eeprom.S>
 
