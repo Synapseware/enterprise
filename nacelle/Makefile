@@ -36,6 +36,8 @@ EXTRAINCDIRS = $(LIBSDIR)
 FORMAT = ihex
 
 
+AVRA = ~/src/synapseware/avra/src/avra
+
 #---------------- Programming Options (avrdude) ----------------
 
 # Programming hardware
@@ -93,17 +95,21 @@ build: sizebefore compile sizeafter
 
 sizebefore:
 	@if test -f $(TARGET).hex; then echo; $(HEXSIZE); \
-	2>/dev/null; echo; fi
+	2>/dev/null; fi
+	@if test -f $(TARGET).eep; then echo; $(EEPSIZE); \
+	2>/dev/null; fi
 
 sizeafter:
 	@if test -f $(TARGET).hex; then echo; $(HEXSIZE); \
-	2>/dev/null; echo; fi
+	2>/dev/null; fi
+	@if test -f $(TARGET).eep; then echo; $(EEPSIZE); \
+	2>/dev/null; fi
 
 
 compile:
 	@echo Building $(TARGET)...
 	@echo
-	@avra -W NoPRAGMA $(INC) -o $(TARGET).hex $(TARGET).asm 1>/dev/null
+	@$(AVRA) $(INC) -o $(TARGET).hex $(TARGET).asm 1>/dev/null
 	@echo
 	@if test -f $(TARGET).eep.hex; then mv $(TARGET).eep.hex $(TARGET).eep; \
 	2>/dev/null; fi
@@ -128,4 +134,5 @@ clean:
 	@rm -f $(TARGET).eep
 	@rm -f $(TARGET).cof
 	@rm -f $(TARGET).obj
+	@rm -f $(TARGET).lst
 	@echo
