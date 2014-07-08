@@ -108,7 +108,6 @@ sizeafter:
 
 compile:
 	@echo Building $(TARGET)...
-	@echo
 	@$(AVRA) $(INC) -o $(TARGET).hex $(TARGET).asm 1>/dev/null
 	@echo
 	@if test -f $(TARGET).eep.hex; then mv $(TARGET).eep.hex $(TARGET).eep; \
@@ -129,7 +128,6 @@ rfuses:
 
 
 clean:
-	@echo Removing build artifacts
 	@rm -f $(TARGET).hex
 	@rm -f $(TARGET).eep
 	@rm -f $(TARGET).cof

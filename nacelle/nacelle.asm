@@ -17,8 +17,17 @@
 .DEF	rmp						= r16
 .DEF	rtmp					= r17
 
-.DEF	rEE_Addr		= r0
-.DEF	rEE_Data		= r1
+.DEF	rREAD_ADDR				= r9
+.DEF	rPWM_VAL				= r18
+.DEF	rACTIVE_LED				= r19
+.DEF	rOFFSET					= r20
+.DEF	rSTP_LOOP				= r21
+.DEF	rSTP_BIT				= r22
+.DEF	rSTP_DATA				= r23
+
+
+.DEF	rEE_Addr				= r0
+.DEF	rEE_Data				= r1
 
 ; ================================================================================================
 ;	C O N S T A N T S
