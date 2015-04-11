@@ -18,8 +18,8 @@ F_CPU = 20000000
 TARGET = nacelle
 
 # List all the include directories, one each on it's own line
-LIBSDIR = /usr/share/avra		\
-	../libs/drivers				\
+LIBSDIR = /usr/share/avra/includes		\
+	../libs/drivers						\
 	../libs/drivers/stp16cp05
 
 
