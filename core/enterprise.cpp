@@ -1,9 +1,10 @@
 #include "enterprise.h"
 
 
-static			Events				events(MAX_EVENT_RECORDS);
-static			Uart				uart();
-static			Sermem				spie(&uart);
+static			Events				events = *(new Events(MAX_EVENT_RECORDS));
+static			Uart				uart = *(new Uart());
+static			Sermem				spie = *(new Sermem(&uart));
+static			SoundEffects *		effects = new SoundEffects();
 
 
 
@@ -55,18 +56,18 @@ void processCommRequest()
 
 	uart.endReceive();
 
-	sfx_off();
+	effects->off();
 
 	_dataReceived = 0;
 	spie.process(_rxData);
 	switch (_rxData & 0x5F)
 	{
 		case 'V':
-			uart_putstrM(PSTR("\r\nVersion: 0.5\r\n"));
+			uart.putstrM(PSTR("\r\nVersion: 0.5\r\n"));
 			break;
 	}
 
-	sfx_on();
+	effects->on();
 
 	// setup the UART receive interrupt handler
 	uart.beginReceive(&receiveCallback);
@@ -99,7 +100,7 @@ void checkButton(eventState_t state)
 	//TODO: Button debounce
 
 	// shutdown the CPU and all effects
-	sfx_off();
+	effects->off();
 
 	// shutoff the LEDs
 	dbg_led_off();
@@ -120,7 +121,7 @@ void checkButton(eventState_t state)
 	events.registerOneShot(enableButton, 8000, EVENT_STATE_NONE);
 
 	// wake back up
-	sfx_on();
+	effects->on();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,7 +134,7 @@ void init(void)
 	dbg_led_on();
 
 	// initialize effects
-	sfx_init();
+	effects->init();
 
 	// initialize SPI EEPROM support
 	spie.init();
@@ -186,9 +187,9 @@ int main()
 
 	spie.showHelp();
 
-	sfx_on();
+	effects->on();
 
-	sfx_startSample(SFX_EFX_OPENING);
+	effects->startSample(SFX_EFX_OPENING);
 
 	while(1)
 	{
