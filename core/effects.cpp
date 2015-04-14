@@ -1,6 +1,53 @@
 #include "effects.h"
 
 
+SoundEffects * thisEffects = 0;
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// This callback is used to dump the next value into the PWM stream
+void sampleCallbackHandler(eventState_t state)
+{
+	if (0 == state)
+		return;
+
+	SoundEffects * effects = (SoundEffects*)state;
+	effects->sampleCallback();
+}
+void readCompleteHandler(uint8_t data)
+{
+	if (0 != thisEffects)
+		thisEffects->readComplete(data);
+}
+void startSampleCompleteHandler(uint8_t result)
+{
+	if (0 != thisEffects)
+		thisEffects->startSampleComplete(result);
+}
+void playAmbientHandler(eventState_t state)
+{
+	if (0 == state)
+		return;
+
+	SoundEffects * effects = (SoundEffects*)state;
+	effects->playAmbient();
+}
+void playSequenceHandler(eventState_t state)
+{
+	if (0 == state)
+		return;
+
+	SoundEffects * effects = (SoundEffects*)state;
+	effects->playSequence();
+}
+void playBackgroundHandler(eventState_t state)
+{
+	if (0 == state)
+		return;
+
+	SoundEffects * effects = (SoundEffects*)state;
+	effects->playBackground();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 SoundEffects::SoundEffects(Events* events)
@@ -12,12 +59,13 @@ SoundEffects::SoundEffects(Events* events)
 	_length		 		= 0;
 	_playState	  		= 0;
 	_onoff				= 0;
+
+	thisEffects			= this;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// This callback is used to dump the next value into the PWM stream
-void sampleCallback(eventState_t state)
+void SoundEffects::sampleCallback(void)
 {
 	// don't do anything if sound-effects are not enabled
 	if (SFX_ON != _onoff)
@@ -55,11 +103,34 @@ void sampleCallback(eventState_t state)
 		else
 		{
 			_length--;
-			
+
 			// read the next sample value as long as we have data to read
-			ee_readA(readComplete);
+			ee_readA(readCompleteHandler);
 		}
 	}
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+void SoundEffects::readComplete(uint8_t sfxdata)
+{
+	_sample = sfxdata;
+	OCR2B = ((uint16_t)_sample + (uint16_t)_ambient) >> 1;
+
+	if (!_length)
+		ee_readEnd();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// starts playback of a sample based on it's signature
+void SoundEffects::startSampleComplete(uint8_t result)
+{
+	if (0 == result)
+	{
+		_playState = SAMPLE_PLAYING;
+		play_led_on();
+	}
+	else
+		_playState = SAMPLE_NONE;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -81,6 +152,7 @@ void SoundEffects::off(void)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 uint8_t SoundEffects::playing(void)
 {
+
 	return _playState;
 }
 
@@ -99,12 +171,12 @@ void SoundEffects::startSample(uint8_t index)
 	// setup for sample playback
 	_playState = SAMPLE_LOADING;
 	_length	= _header.effects[index].length;
-	ee_setpageA(_header.effects[index].startPage, startSampleComplete);
+	ee_setpageA(_header.effects[index].startPage, startSampleCompleteHandler);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // selects a "random" ambient sound to play
-void SoundEffects::playAmbient(eventState_t state)
+void SoundEffects::playAmbient(void)
 {
 	static uint8_t	next		= 0;
 	static uint8_t	delay		= 0;
@@ -155,7 +227,7 @@ void SoundEffects::playAmbient(eventState_t state)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // plays a background sound effect on a schedule
-void SoundEffects::playBackground(eventState_t state)
+void SoundEffects::playBackground(void)
 {
 	// don't do anything if we are playing a sample
 	if (SAMPLE_NONE != _playState)
@@ -174,7 +246,7 @@ void SoundEffects::playBackground(eventState_t state)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // selects a sound effects sequence
-void SoundEffects::playSequence(eventState_t state)
+void SoundEffects::playSequence(void)
 {
 	static uint8_t	next		= 0;
 	static uint8_t	delay		= 0;
@@ -381,8 +453,8 @@ void SoundEffects::initializeEffects(void)
 			continue;
 		
 		// register sound effects header
-		if (0 != (hdr.RecordType & RT_SOUND))
-			events->registerEvent(soundEffectsHandler, hdr.Delay, 0);
+		//if (0 != (hdr.RecordType & RT_SOUND))
+		//	_events->registerEvent(soundEffectsHandler, hdr.Delay, this);
 	}
 }
 
@@ -409,8 +481,8 @@ void SoundEffects::init(void)
 	// load the header data
 	fillHeader();
 
-	events->registerEvent(sampleCallback, 0, EVENT_STATE_NONE);
-	events->registerEvent(playAmbient, 2650, EVENT_STATE_NONE);
-	events->registerEvent(playSequence, 1000, EVENT_STATE_NONE);
-	events->registerEvent(playBackground, 28500, EVENT_STATE_NONE);
+	_events->registerEvent(sampleCallbackHandler, 0, this);
+	_events->registerEvent(playAmbientHandler, 2650, this);
+	_events->registerEvent(playSequenceHandler, 1000, this);
+	_events->registerEvent(playBackgroundHandler, 28500, this);
 }
