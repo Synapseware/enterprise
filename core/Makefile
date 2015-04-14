@@ -26,19 +26,19 @@
 # make extcoff = Convert ELF to AVR Extended COFF.
 #
 # make program = Download the hex file to the device, using avrdude.
-#                Please customize the avrdude settings below first!
+#				Please customize the avrdude settings below first!
 #
 # make wfuses = Write fuse settings for this program to the mcu
 #
 # make rfuses = Read current fuse values
 #
 # make debug = Start either simulavr or avarice as specified for debugging, 
-#              with avr-gdb or avr-insight as the front end for debugging.
+#			  with avr-gdb or avr-insight as the front end for debugging.
 #
 # make filename.s = Just compile filename.c into the assembler code only.
 #
 # make filename.i = Create a preprocessed source file for use in submitting
-#                   bug reports to the GCC project.
+#				   bug reports to the GCC project.
 #
 # To rebuild project do "make clean" then "make all".
 #----------------------------------------------------------------------------
@@ -67,8 +67,8 @@ TARGET = enterprise
 
 
 # Object files directory
-#     To put object files in current directory, use a dot (.), do NOT make
-#     this an empty or blank macro!
+#	 To put object files in current directory, use a dot (.), do NOT make
+#	 this an empty or blank macro!
 OBJDIR = .
 
 
@@ -77,85 +77,87 @@ LIBSDIR = ../libs
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c			                     \
-	effects.c     			                     \
-	$(LIBSDIR)/events/events.c                   \
-	$(LIBSDIR)/drivers/at24c/at24c.c             \
-	$(LIBSDIR)/sermem/sermem.c			         \
-	$(LIBSDIR)/twi/i2c.c                         \
-	$(LIBSDIR)/spi/spi.c                         \
-	$(LIBSDIR)/uart/uart.c
+SRC = $(LIBSDIR)/drivers/at24c/at24c.c			\
+	$(LIBSDIR)/sermem/sermem.c					\
+	$(LIBSDIR)/twi/i2c.c						\
+	$(LIBSDIR)/spi/spi.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
-CPPSRC = 
+CPPSRC = $(TARGET).cpp							\
+	effects.cpp							 		\
+	drivers/nacelle.cpp	 						\
+	$(LIBSDIR)/events/events.cpp				\
+	$(LIBSDIR)/uart/uart.cpp
 
+
+DEFS  = -DTWI_SPEED=400
+DEFS += -DBAUD=57600
+DEFS += -DMAX_EVENT_RECORDS=24
+DEFS += -DSPI_CLK_4
+DEFS += -DBoard_Enterprise
 
 # List Assembler source files here.
-#     Make them always end in a capital .S.  Files ending in a lowercase .s
-#     will not be considered source files but generated files (assembler
-#     output from the compiler), and will be deleted upon "make clean"!
-#     Even though the DOS/Win* filesystem matches both .s and .S the same,
-#     it will preserve the spelling of the filenames, and gcc itself does
-#     care about how the name is spelled on its command-line.
+#	 Make them always end in a capital .S.  Files ending in a lowercase .s
+#	 will not be considered source files but generated files (assembler
+#	 output from the compiler), and will be deleted upon "make clean"!
+#	 Even though the DOS/Win* filesystem matches both .s and .S the same,
+#	 it will preserve the spelling of the filenames, and gcc itself does
+#	 care about how the name is spelled on its command-line.
 ASRC = 
 
 
 # Optimization level, can be [0, 1, 2, 3, s]. 
-#     0 = turn off optimization. s = optimize for size.
-#     (Note: 3 is not always the best optimization level. See avr-libc FAQ.)
+#	 0 = turn off optimization. s = optimize for size.
+#	 (Note: 3 is not always the best optimization level. See avr-libc FAQ.)
 OPT = s
 
 
 # Debugging format.
-#     Native formats for AVR-GCC's -g are dwarf-2 [default] or stabs.
-#     AVR Studio 4.10 requires dwarf-2.
-#     AVR [Extended] COFF format requires stabs, plus an avr-objcopy run.
+#	 Native formats for AVR-GCC's -g are dwarf-2 [default] or stabs.
+#	 AVR Studio 4.10 requires dwarf-2.
+#	 AVR [Extended] COFF format requires stabs, plus an avr-objcopy run.
 DEBUG = dwarf-2
 
 
 # List any extra directories to look for include files here.
-#     Each directory must be seperated by a space.
-#     Use forward slashes for directory separators.
-#     For a directory that has spaces, enclose it in quotes.
+#	 Each directory must be seperated by a space.
+#	 Use forward slashes for directory separators.
+#	 For a directory that has spaces, enclose it in quotes.
 EXTRAINCDIRS = $(LIBSDIR)
 
 
 # Compiler flag to set the C Standard level.
-#     c89   = "ANSI" C
-#     gnu89 = c89 plus GCC extensions
-#     c99   = ISO C99 standard (not yet fully implemented)
-#     gnu99 = c99 plus GCC extensions
+#	 c89   = "ANSI" C
+#	 gnu89 = c89 plus GCC extensions
+#	 c99   = ISO C99 standard (not yet fully implemented)
+#	 gnu99 = c99 plus GCC extensions
 CSTANDARD = -std=gnu99
 
 
 # Place -D or -U options here for C sources
 CDEFS = -DF_CPU=$(F_CPU)UL
-CDEFS += -DTWI_SPEED=400
-CDEFS += -DBAUD=57600
-CDEFS += -DMAX_EVENT_RECORDS=24
-CDEFS += -DSPI_CLK_4
-CDEFS += -DBoard_Enterprise
+CDEFS += $(DEFS)
 
 
 # Place -D or -U options here for ASM sources
 ADEFS = -DF_CPU=$(F_CPU)
-
+ADEFS += $(DEFS)
 
 # Place -D or -U options here for C++ sources
 CPPDEFS = -DF_CPU=$(F_CPU)UL
 #CPPDEFS += -D__STDC_LIMIT_MACROS
 #CPPDEFS += -D__STDC_CONSTANT_MACROS
-
+CPPDEFS += $(DEFS)
 
 
 #---------------- Compiler Options C ----------------
-#  -g*:          generate debugging information
-#  -O*:          optimization level
-#  -f...:        tuning, see GCC manual and avr-libc documentation
-#  -Wall...:     warning level
-#  -Wa,...:      tell GCC to pass this to the assembler.
-#    -adhlns...: create assembler listing
+#  -g*:		  generate debugging information
+#  -O*:		  optimization level
+#  -f...:		tuning, see GCC manual and avr-libc documentation
+#  -Wall...:	 warning level
+#  -Wa,...:	  tell GCC to pass this to the assembler.
+#	-adhlns...: create assembler listing
 CFLAGS = -g$(DEBUG)
 CFLAGS += $(CDEFS)
 CFLAGS += -O$(OPT)
@@ -176,12 +178,12 @@ CFLAGS += $(CSTANDARD)
 
 
 #---------------- Compiler Options C++ ----------------
-#  -g*:          generate debugging information
-#  -O*:          optimization level
-#  -f...:        tuning, see GCC manual and avr-libc documentation
-#  -Wall...:     warning level
-#  -Wa,...:      tell GCC to pass this to the assembler.
-#    -adhlns...: create assembler listing
+#  -g*:		  generate debugging information
+#  -O*:		  optimization level
+#  -f...:		tuning, see GCC manual and avr-libc documentation
+#  -Wall...:	 warning level
+#  -Wa,...:	  tell GCC to pass this to the assembler.
+#	-adhlns...: create assembler listing
 CPPFLAGS = -g$(DEBUG)
 CPPFLAGS += $(CPPDEFS)
 CPPFLAGS += -O$(OPT)
@@ -206,11 +208,11 @@ CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 #  -Wa,...:   tell GCC to pass this to the assembler.
 #  -adhlns:   create listing
 #  -gstabs:   have the assembler create line number information; note that
-#             for use in COFF files, additional information about filenames
-#             and function names needs to be present in the assembler source
-#             files -- see avr-libc docs [FIXME: not yet described there]
+#			 for use in COFF files, additional information about filenames
+#			 and function names needs to be present in the assembler source
+#			 files -- see avr-libc docs [FIXME: not yet described there]
 #  -listing-cont-lines: Sets the maximum number of continuation lines of hex 
-#       dump that will be displayed for a given single line of source input.
+#	   dump that will be displayed for a given single line of source input.
 ASFLAGS = $(ADEFS) -Wa,-adhlns=$(<:%.S=$(OBJDIR)/%.lst),-gstabs,--listing-cont-lines=100
 
 
@@ -243,9 +245,9 @@ MATH_LIB = -lm
 
 
 # List any extra directories to look for libraries here.
-#     Each directory must be seperated by a space.
-#     Use forward slashes for directory separators.
-#     For a directory that has spaces, enclose it in quotes.
+#	 Each directory must be seperated by a space.
+#	 Use forward slashes for directory separators.
+#	 For a directory that has spaces, enclose it in quotes.
 EXTRALIBDIRS = $(LIBSDIR)
 
 
@@ -265,9 +267,9 @@ EXTMEMOPTS =
 
 
 #---------------- Linker Options ----------------
-#  -Wl,...:     tell GCC to pass this to linker.
-#    -Map:      create map file
-#    --cref:    add cross reference to  map file
+#  -Wl,...:	 tell GCC to pass this to linker.
+#	-Map:	  create map file
+#	--cref:	add cross reference to  map file
 LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
 LDFLAGS += $(EXTMEMOPTS)
 LDFLAGS += $(patsubst %,-L%,$(EXTRALIBDIRS))
@@ -286,8 +288,8 @@ LDFLAGS += $(LIBS)
 AVRDUDE_PROGRAMMER = stk500v2
 
 # com1 = serial port. Use lpt1 to connect to parallel port.
-AVRDUDE_PORT = com6    # programmer connected to serial device
-AVRDUDE_PORT = /dev/ttyACM1    # programmer connected to serial device
+AVRDUDE_PORT = com6	# programmer connected to serial device
+AVRDUDE_PORT = /dev/ttyACM1	# programmer connected to serial device
 
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 #AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
@@ -337,8 +339,8 @@ JTAG_DEV = /dev/com1
 DEBUG_PORT = 4242
 
 # Debugging host used to communicate between GDB / avarice / simulavr, normally
-#     just set to localhost unless doing some sort of crazy debugging when 
-#     avarice is running on a different computer.
+#	 just set to localhost unless doing some sort of crazy debugging when 
+#	 avarice is running on a different computer.
 DEBUG_HOST = localhost
 
 
@@ -461,8 +463,8 @@ rfuses:
 
 
 # Generate avr-gdb config/init file which does the following:
-#     define the reset signal, load the target file, connect to target, and set 
-#     a breakpoint at main().
+#	 define the reset signal, load the target file, connect to target, and set 
+#	 a breakpoint at main().
 gdb-config: 
 	@$(REMOVE) $(GDBINIT_FILE)
 	@echo define reset >> $(GDBINIT_FILE)

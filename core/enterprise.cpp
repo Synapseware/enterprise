@@ -1,6 +1,20 @@
 #include "enterprise.h"
 
 
+static			Events				events(MAX_EVENT_RECORDS);
+static			Uart				uart();
+static			Sermem				spie(&uart);
+
+
+
+//TODO: Need global event handlers for the following:
+// SoundEffects::sampleCallback(eventState_t)
+// SoundEffects::startSampleComplete(uint8_t)
+
+
+
+
+
 volatile uint8_t _idx = 0;
 volatile uint8_t _val = 0;
 void fadeStatusLed(eventState_t state)
@@ -39,12 +53,12 @@ void processCommRequest()
 	if (!_dataReceived)
 		return;
 
-	uartEndReceive();
+	uart.endReceive();
 
 	sfx_off();
 
 	_dataReceived = 0;
-	spie_process(_rxData);
+	spie.process(_rxData);
 	switch (_rxData & 0x5F)
 	{
 		case 'V':
@@ -55,7 +69,7 @@ void processCommRequest()
 	sfx_on();
 
 	// setup the UART receive interrupt handler
-	uartBeginReceive(&receiveCallback);
+	uart.beginReceive(&receiveCallback);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -103,7 +117,7 @@ void checkButton(eventState_t state)
 	sleep_cpu();
 
 	//
-	registerOneShot(enableButton, 8000, EVENT_STATE_NONE);
+	events.registerOneShot(enableButton, 8000, EVENT_STATE_NONE);
 
 	// wake back up
 	sfx_on();
@@ -122,13 +136,13 @@ void init(void)
 	sfx_init();
 
 	// initialize SPI EEPROM support
-	spie_init();
+	spie.init();
 
 	// initialize USART
-	uart_init();
+	uart.init();
 
 	// setup the UART receive interrupt handler
-	uartBeginReceive(&receiveCallback);
+	uart.beginReceive(&receiveCallback);
 
 	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	// establish event timer & handler
@@ -142,7 +156,7 @@ void init(void)
 				(1<<CS10);
 	TIMSK1	=	(1<<OCIE1A);
 
-	setTimeBase(SAMPLE_RATE);
+	events.setTimeBase(SAMPLE_RATE);
 
 	// setup sleep mode
 	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -155,8 +169,8 @@ void init(void)
 	PCICR			|= (1<<SWITCH_PCICR);
 
 
-	registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
-	registerEvent(readNextStatusVal, 500, EVENT_STATE_NONE);
+	events.registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
+	events.registerEvent(readNextStatusVal, 500, EVENT_STATE_NONE);
 
 	// enable all interrupts
 	sei();
@@ -168,9 +182,9 @@ int main()
 {
 	init();
 
-	uart_putstrAM(PSTR("Enterprise main board booting up...\r\n"), 0);
+	uart.putstrAM(PSTR("Enterprise main board booting up...\r\n"), 0);
 
-	spie_showHelp();
+	spie.showHelp();
 
 	sfx_on();
 
@@ -179,7 +193,7 @@ int main()
 	while(1)
 	{
 		// process any pending events
-		eventsDoEvents();
+		events.doEvents();
 
 		// process any communications data
 		processCommRequest();
@@ -191,7 +205,7 @@ int main()
 ISR(TIMER1_COMPA_vect)
 {
 	// trigger event cycle
-	eventSync();
+	events.sync();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -205,5 +219,5 @@ ISR(SWITCH_PCVECT)
 	SWITCH_PCMSK &= ~(1<<SWITCH_PCINT);
 
 	// require user to press button for at least 1/8 second
-	registerOneShot(checkButton, 1000, EVENT_STATE_NONE);
+	events.registerOneShot(checkButton, 1000, EVENT_STATE_NONE);
 }
