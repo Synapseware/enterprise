@@ -4,7 +4,7 @@
 static			Events				events = *(new Events(MAX_EVENT_RECORDS));
 static			Uart				uart = *(new Uart());
 static			Sermem				spie = *(new Sermem(&uart));
-static			SoundEffects *		effects = new SoundEffects();
+static			SoundEffects *		effects = new SoundEffects(&events);
 
 
 
@@ -63,7 +63,7 @@ void processCommRequest()
 	switch (_rxData & 0x5F)
 	{
 		case 'V':
-			uart.putstrM(PSTR("\r\nVersion: 0.5\r\n"));
+			uart.putstr(PSTR("\r\nVersion: 0.5\r\n"));
 			break;
 	}
 
