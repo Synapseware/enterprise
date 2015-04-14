@@ -1,19 +1,11 @@
 #include "enterprise.h"
 
 
-static			Events				events = *(new Events(MAX_EVENT_RECORDS));
-static			Uart				uart = *(new Uart());
-static			Sermem				spie = *(new Sermem(&uart));
-static			SoundEffects *		effects = new SoundEffects(&events);
+Uart				uart();
+Events				events(MAX_EVENT_RECORDS);
 
-
-
-//TODO: Need global event handlers for the following:
-// SoundEffects::sampleCallback(eventState_t)
-// SoundEffects::startSampleComplete(uint8_t)
-
-
-
+Sermem				spie(&uart);
+SoundEffects		effects(&events);
 
 
 volatile uint8_t _idx = 0;
@@ -49,14 +41,14 @@ void receiveCallback(char data)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // processes a communications request from the serial port
-void processCommRequest()
+void processCommRequest(void)
 {
 	if (!_dataReceived)
 		return;
 
 	uart.endReceive();
 
-	effects->off();
+	effects.off();
 
 	_dataReceived = 0;
 	spie.process(_rxData);
@@ -67,7 +59,7 @@ void processCommRequest()
 			break;
 	}
 
-	effects->on();
+	effects.on();
 
 	// setup the UART receive interrupt handler
 	uart.beginReceive(&receiveCallback);
@@ -100,7 +92,7 @@ void checkButton(eventState_t state)
 	//TODO: Button debounce
 
 	// shutdown the CPU and all effects
-	effects->off();
+	effects.off();
 
 	// shutoff the LEDs
 	dbg_led_off();
@@ -121,7 +113,7 @@ void checkButton(eventState_t state)
 	events.registerOneShot(enableButton, 8000, EVENT_STATE_NONE);
 
 	// wake back up
-	effects->on();
+	effects.on();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -134,7 +126,7 @@ void init(void)
 	dbg_led_on();
 
 	// initialize effects
-	effects->init();
+	effects.init();
 
 	// initialize SPI EEPROM support
 	spie.init();
@@ -183,13 +175,13 @@ int main()
 {
 	init();
 
-	uart.putstrAM(PSTR("Enterprise main board booting up...\r\n"), 0);
+	uart.putstrM(PSTR("Enterprise main board booting up...\r\n"));
 
 	spie.showHelp();
 
-	effects->on();
+	effects.on();
 
-	effects->startSample(SFX_EFX_OPENING);
+	effects.startSample(SFX_EFX_OPENING);
 
 	while(1)
 	{
