@@ -1,7 +1,7 @@
 #include "enterprise.h"
 
 
-Uart				uart();
+Uart				uart;
 Events				events(MAX_EVENT_RECORDS);
 
 Sermem				spie(&uart);
@@ -55,7 +55,7 @@ void processCommRequest(void)
 	switch (_rxData & 0x5F)
 	{
 		case 'V':
-			uart.putstr(PSTR("\r\nVersion: 0.5\r\n"));
+			uart.putstrM(PSTR("\r\nVersion: 0.5\r\n"));
 			break;
 	}
 
