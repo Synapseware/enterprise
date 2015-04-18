@@ -6,8 +6,13 @@ using namespace std;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Converts a WAV file to an AVW file, the intermediary format
-void convertFile(const char* outputFile, const char* inputFile)
+void convertFile(const char* inputFile)
 {
+	int len = strlen(inputFile);
+	char* outputFile = (char*)malloc(len + 1);
+	strcpy(outputFile, inputFile);
+	strcpy(outputFile + len - 3, "raw");
+
 	cout << "Output: " << outputFile << "\n";
 	cout << "Input:  " << inputFile << "\n";
 
@@ -30,30 +35,17 @@ void convertFile(const char* outputFile, const char* inputFile)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 int main(int argc, char* argv[])
 {
-	if (argc != 5)
+	if (argc != 2)
 	{
 		showHelp();
 		return 0;
 	}
 
 
-	char* outputFile = NULL;
 	char* inputFile = NULL;
 
-	for (int i = 0; i < argc - 1; i++)
-	{
-		if (0 == strncmp("-o", argv[i], 2))
-			outputFile = argv[i + 1];
+	inputFile = argv[1];
 
-		else if (0 == strncmp("-i", argv[i], 2))
-			inputFile = argv[i + 1];
-	}
-
-	if (outputFile == NULL)
-	{
-		cout << "Missing output file!\n";
-		return -1;
-	}
 	if (inputFile == NULL)
 	{
 		cout << "Missing input file!\n";
@@ -61,7 +53,7 @@ int main(int argc, char* argv[])
 	}
 
 	// write length of file to output stream
-	convertFile(outputFile, inputFile);
+	convertFile(inputFile);
 
 	return 0;
 }
