@@ -105,7 +105,7 @@ void SoundEffects::sampleCallback(void)
 			_length--;
 
 			// read the next sample value as long as we have data to read
-			ee_readA(readCompleteHandler);
+			ee_readA(&readCompleteHandler);
 		}
 	}
 }
@@ -171,7 +171,7 @@ void SoundEffects::startSample(uint8_t index)
 	// setup for sample playback
 	_playState = SAMPLE_LOADING;
 	_length	= _header.effects[index].length;
-	ee_setpageA(_header.effects[index].startPage, startSampleCompleteHandler);
+	ee_setpageA(_header.effects[index].startPage, &startSampleCompleteHandler);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -447,14 +447,6 @@ void SoundEffects::initializeEffects(void)
 		// break enumeration if null record
 		if (hdr.RecordType == RT_NULL)
 			break;
-
-		// skip empty headers		
-		if (0 == hdr.Count)
-			continue;
-		
-		// register sound effects header
-		//if (0 != (hdr.RecordType & RT_SOUND))
-		//	_events->registerEvent(soundEffectsHandler, hdr.Delay, this);
 	}
 }
 
@@ -464,10 +456,9 @@ void SoundEffects::init(void)
 {
 	audioOut_en();
 	ampPwr_en();
-	ampPwr_off();
+	off();
 
 	_playState		= SAMPLE_NONE;
-	_onoff			= SFX_OFF;
 
 	// timer2, PWM timer, used for audio output
 	// Set fast PWM mode  (p.157)
