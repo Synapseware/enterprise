@@ -47,7 +47,7 @@ typedef struct
 // SOUND_HEADER reflects the actual header record
 typedef struct
 {
-	uint16_t			samples;			// + 0	// # of samples (0-255)
+	uint16_t		samples;         		// + 0	// # of samples (0-255)
 	SOUND_EFFECT	effects[42];			// + 2	// array of sound effects
 } volatile SOUND_HEADER;					// 2 + 42 * 6 bytes = 254 bytes
 

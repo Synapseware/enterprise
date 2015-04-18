@@ -91,14 +91,15 @@ namespace IOLib
 			var totalLength = samples.Sum(s => s.Data.Length) + 4096;
 			using (var fo = _fileSystemAbstractions.Create(outputFile, totalLength, FileOptions.RandomAccess))
 			{
-				var dataPos = 256;			// current position in data block
-
 				// write the sample count to the header
 				var bNum = BitConverter.GetBytes((ushort)sourceFiles.Count());
 				fo.Write(bNum, 0, 2);
 				var headerPos = fo.Position;
 
 				var sampleIndex = 0;
+
+				// current position in data block
+				var dataPos = 256;
 
 				foreach (var sample in samples)
 				{
