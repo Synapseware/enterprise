@@ -1,0 +1,155 @@
+wavutil v1.00 by Matthew Potter
+Creating 'startrek.bin' with 25 entries
+-----------------------------------------------------------------
+0) ambient-bridge-beep-beep.wav
+0x0004     Start Page:      0x0001 (1)
+0x0008     Length:          0x06EE (1774)
+0x00000100 Data Start:      0x00000100 (256)
+0x000007EE Sample Length:   0x000006EE (1774)
+-----------------------------------------------------------------
+1) ambient-bridge-beep-up.wav
+0x000A     Start Page:      0x0008 (8)
+0x000E     Length:          0x1029 (4137)
+0x00000800 Data Start:      0x00000800 (2048)
+0x00001829 Sample Length:   0x00001029 (4137)
+-----------------------------------------------------------------
+2) ambient-bridge-key-beep.wav
+0x0010     Start Page:      0x0019 (25)
+0x0014     Length:          0x1093 (4243)
+0x00001900 Data Start:      0x00001900 (6400)
+0x00002993 Sample Length:   0x00001093 (4243)
+-----------------------------------------------------------------
+3) ambient-bridge-whip-whip.wav
+0x0016     Start Page:      0x002A (42)
+0x001A     Length:          0x1400 (5120)
+0x00002A00 Data Start:      0x00002A00 (10752)
+0x00003E00 Sample Length:   0x00001400 (5120)
+-----------------------------------------------------------------
+4) background-astrogator.wav
+0x001C     Start Page:      0x003E (62)
+0x0020     Length:          0x11DA (4570)
+0x00003E00 Data Start:      0x00003E00 (15872)
+0x00004FDA Sample Length:   0x000011DA (4570)
+-----------------------------------------------------------------
+5) background-main-screen.wav
+0x0022     Start Page:      0x0050 (80)
+0x0026     Length:          0x1E67 (7783)
+0x00005000 Data Start:      0x00005000 (20480)
+0x00006E67 Sample Length:   0x00001E67 (7783)
+-----------------------------------------------------------------
+6) effect-communicator-beeps.wav
+0x0028     Start Page:      0x006F (111)
+0x002C     Length:          0x1920 (6432)
+0x00006F00 Data Start:      0x00006F00 (28416)
+0x00008820 Sample Length:   0x00001920 (6432)
+-----------------------------------------------------------------
+7) effect-doors.wav
+0x002E     Start Page:      0x0089 (137)
+0x0032     Length:          0x15D0 (5584)
+0x00008900 Data Start:      0x00008900 (35072)
+0x00009ED0 Sample Length:   0x000015D0 (5584)
+-----------------------------------------------------------------
+8) effect-energize.wav
+0x0034     Start Page:      0x009F (159)
+0x0038     Length:          0x3CF9 (15609)
+0x00009F00 Data Start:      0x00009F00 (40704)
+0x0000DBF9 Sample Length:   0x00003CF9 (15609)
+-----------------------------------------------------------------
+9) effect-hailing-call.wav
+0x003A     Start Page:      0x00DC (220)
+0x003E     Length:          0x2605 (9733)
+0x0000DC00 Data Start:      0x0000DC00 (56320)
+0x00010205 Sample Length:   0x00002605 (9733)
+-----------------------------------------------------------------
+10) effect-heart-beat.wav
+0x0040     Start Page:      0x0103 (259)
+0x0044     Length:          0x0DC1 (3521)
+0x00010300 Data Start:      0x00010300 (66304)
+0x000110C1 Sample Length:   0x00000DC1 (3521)
+-----------------------------------------------------------------
+11) effect-opening.wav
+0x0046     Start Page:      0x0111 (273)
+0x004A     Length:          0xDAC7 (56007)
+0x00011100 Data Start:      0x00011100 (69888)
+0x0001EBC7 Sample Length:   0x0000DAC7 (56007)
+-----------------------------------------------------------------
+12) effect-red-alert.wav
+0x004C     Start Page:      0x01EC (492)
+0x0050     Length:          0x1D0E (7438)
+0x0001EC00 Data Start:      0x0001EC00 (125952)
+0x0002090E Sample Length:   0x00001D0E (7438)
+-----------------------------------------------------------------
+13) effect-replicator.wav
+0x0052     Start Page:      0x020A (522)
+0x0056     Length:          0x4564 (17764)
+0x00020A00 Data Start:      0x00020A00 (133632)
+0x00024F64 Sample Length:   0x00004564 (17764)
+-----------------------------------------------------------------
+14) effect-tribble.wav
+0x0058     Start Page:      0x0250 (592)
+0x005C     Length:          0x1AEC (6892)
+0x00025000 Data Start:      0x00025000 (151552)
+0x00026AEC Sample Length:   0x00001AEC (6892)
+-----------------------------------------------------------------
+15) voice-bones-doctor.wav
+0x005E     Start Page:      0x026B (619)
+0x0062     Length:          0x2F85 (12165)
+0x00026B00 Data Start:      0x00026B00 (158464)
+0x00029A85 Sample Length:   0x00002F85 (12165)
+-----------------------------------------------------------------
+16) voice-bones-impossible.wav
+0x0064     Start Page:      0x029B (667)
+0x0068     Length:          0x2CAF (11439)
+0x00029B00 Data Start:      0x00029B00 (170752)
+0x0002C7AF Sample Length:   0x00002CAF (11439)
+-----------------------------------------------------------------
+17) voice-bridge-to-captain-kirk.wav
+0x006A     Start Page:      0x02C8 (712)
+0x006E     Length:          0x2A84 (10884)
+0x0002C800 Data Start:      0x0002C800 (182272)
+0x0002F284 Sample Length:   0x00002A84 (10884)
+-----------------------------------------------------------------
+18) voice-captain-what-do-we-do.wav
+0x0070     Start Page:      0x02F3 (755)
+0x0074     Length:          0x1F19 (7961)
+0x0002F300 Data Start:      0x0002F300 (193280)
+0x00031219 Sample Length:   0x00001F19 (7961)
+-----------------------------------------------------------------
+19) voice-going-down.wav
+0x0076     Start Page:      0x0313 (787)
+0x007A     Length:          0x2447 (9287)
+0x00031300 Data Start:      0x00031300 (201472)
+0x00033747 Sample Length:   0x00002447 (9287)
+-----------------------------------------------------------------
+20) voice-kirk-beam-me-up-scotty.wav
+0x007C     Start Page:      0x0338 (824)
+0x0080     Length:          0x1A37 (6711)
+0x00033800 Data Start:      0x00033800 (210944)
+0x00035237 Sample Length:   0x00001A37 (6711)
+-----------------------------------------------------------------
+21) voice-kirk-here.wav
+0x0082     Start Page:      0x0353 (851)
+0x0086     Length:          0x1A2F (6703)
+0x00035300 Data Start:      0x00035300 (217856)
+0x00036D2F Sample Length:   0x00001A2F (6703)
+-----------------------------------------------------------------
+22) voice-scotty-ayesir.wav
+0x0088     Start Page:      0x036E (878)
+0x008C     Length:          0x0B45 (2885)
+0x00036E00 Data Start:      0x00036E00 (224768)
+0x00037945 Sample Length:   0x00000B45 (2885)
+-----------------------------------------------------------------
+23) voice-scotty-calling-kirk.wav
+0x008E     Start Page:      0x037A (890)
+0x0092     Length:          0x29EA (10730)
+0x00037A00 Data Start:      0x00037A00 (227840)
+0x0003A3EA Sample Length:   0x000029EA (10730)
+-----------------------------------------------------------------
+24) voice-spock-fasinating.wav
+0x0094     Start Page:      0x03A4 (932)
+0x0098     Length:          0x1371 (4977)
+0x0003A400 Data Start:      0x0003A400 (238592)
+0x0003B771 Sample Length:   0x00001371 (4977)
+-------------------------------------------
+Bytes Used: 243712
+Pages Used: 952
