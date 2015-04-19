@@ -89,6 +89,13 @@ void upload(int baud, const char* port, const char* filename)
 
 	configure_port(fd, baud);
 
+	// begin upload processing
+	// Hello = 'A'
+	// StoreFile = 'W'
+	// RetrieveFile = 'R'
+	// Format = 'F'
+	write(fd, "A", 1);
+	
 
 	close(fd);
 }

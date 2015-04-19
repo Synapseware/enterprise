@@ -1,17 +1,13 @@
-#ifndef __UPLOAD_H__
-#define __UPLOAD_H__
+#ifndef __HDRINFO_H__
+#define __HDRINFO_H__
 
 
 #include <iostream>
 #include <stdio.h>
 #include <fstream>
 #include <stdint.h>
-#include <string.h>
 #include <stdlib.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
+#include <string.h>
 
 
 using namespace std;
