@@ -10,12 +10,12 @@ int open_port(const char* port)
 	
 	if (fd == -1) // if open is unsucessful
 	{
-		cout << "open_port: Unable to open " << port << ".\n";
+		cout << "open_port: Unable to open " << port << "." << endl;
 		return -1;
 	}
 
 	fcntl(fd, F_SETFL, 0);
-	cout << "port is open.\n";
+	cout << "port is open." << endl;
 
 	return fd;
 }
@@ -44,13 +44,13 @@ void saveSettings(int baud, const char* port)
 	ofstream file(".upload-settings", ios::out);
 	if (!file.fail())
 	{
-		file << baud << "\n";
-		file << port << "\n";
+		file << baud << "" << endl;
+		file << port << "" << endl;
 		file.flush();
 		file.close();
 	}
 	else
-		cout << "Failed to create settings file\n";
+		cout << "Failed to create settings file" << endl;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -72,9 +72,9 @@ bool loadSettings(int* baud, char** port)
 
 	file.close();
 
-	cout << "Loaded settings:\n";
-	cout << "  Baud: " << *baud << "\n";
-	cout << "  Port: " << *port << "\n";
+	cout << "Loaded settings:" << endl;
+	cout << "  Baud: " << *baud << "" << endl;
+	cout << "  Port: " << *port << "" << endl;
 
 	return true;
 }
@@ -124,7 +124,7 @@ int mapBaud(int baud)
 			return  B1200;
 	}
 
-	cout << "Invalid baud rate: " << baud << "\n";
+	cout << "Invalid baud rate: " << baud << endl;
 
 	return -1;
 }
@@ -148,21 +148,24 @@ int main(int argc, char* argv[])
 	// -b 9600 -p /dev/ttyACM0 -i effects.bin -s
 	for (int i = 1; i < argc; i++)
 	{
-		if (0 == strncmp("-b", argv[i], 2))
-			baud = atoi(argv[i + 1]);
+		if (0 == strncmp("-i", argv[i], 2))
+			file = argv[i + 1];
 		else if (0 == strncmp("-p", argv[i], 2))
 			port = argv[i + 1];
-		else if (0 == strncmp("-i", argv[i], 2))
-			file = argv[i + 1];
+		else if (0 == strncmp("-b", argv[i], 2))
+			baud = atoi(argv[i + 1]);
 		else if (0 == strncmp("-s", argv[i], 2))
 			save = true;
 	}
 
-	cout << "Uploading " << file << " to the Enterprise on port " << port << " at " << baud << " baud.\n";
-
 	int actualBaud = mapBaud(baud);
 	if (actualBaud < 1)
+	{
+		cout << "The specified baud rate of " << baud << " is not valid." << endl;
 		return -1;
+	}
+
+	cout << "Uploading " << file << " to the Enterprise on port " << port << " at " << baud << " baud." << endl;
 
 	if (save)
 		saveSettings(baud, port);
@@ -175,6 +178,13 @@ int main(int argc, char* argv[])
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 void showHelp(void)
 {
-	cout << "upload\n";
-	cout << "Uploads an effects file to the Enterprise!\n";
+	cout << "upload -i {filename} -p {serial port} -b {baud rate} -s" << endl;
+	cout << "Uploads an EEPROM effects file to the Enterprise." << endl;
+	cout << "  -i  The EEPROM image file to upload to the Enterprise." << endl;
+	cout << "  -b  Specify the baud rate to use.  Must be a standard value (e.g. 9600, 57600, etc)." << endl;
+	cout << "  -p  Specify the serial port to use." << endl;
+	cout << "         List serial ports with 'll /dev/tty*' at the command prompt." << endl;
+	cout << "  -s  Save the given port and baud rate as the new defaults." << endl;
+	cout << "         Note: settings are saved in the .upload-settings file in the current directory." << endl;
+	cout << endl;
 }

@@ -7,6 +7,9 @@
 #include <fstream>
 #include <stdint.h>
 
+using namespace std;
+
+
 void showHelp(void);
 
 
