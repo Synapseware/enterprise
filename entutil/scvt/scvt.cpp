@@ -29,6 +29,8 @@ void analyzeSoundFile(const char* filename)
 			smallest = data;
 		if (largest < data)
 			largest = data;
+
+		printf("%d\n", data);
 	}
 	fclose(file);
 
@@ -74,7 +76,7 @@ bool convertFile(const char* inputFile)
 		cout << "Error: Parsing failed." << endl;
 	}
 
-	//analyzeSoundFile(outputFile);
+	analyzeSoundFile(outputFile);
 
 	free(outputFile);
 	delete(parser);
@@ -86,14 +88,21 @@ bool convertFile(const char* inputFile)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 int main(int argc, char* argv[])
 {
-	if (argc != 2)
+	if (argc < 2)
 	{
 		showHelp();
 		return 0;
 	}
 
 	char* inputFile = NULL;
+	bool analyze = false;
 	inputFile = argv[1];
+
+	for (int i = 1; i < argc; i++)
+	{
+		if (0 == strncmp("-a", argv[i], 2))
+			analyze = true;
+	}
 
 	if (inputFile == NULL || 0 == strlen(inputFile))
 	{
@@ -102,7 +111,8 @@ int main(int argc, char* argv[])
 	}
 
 	// write length of file to output stream
-	convertFile(inputFile);
+	if (analyze)
+		convertFile(inputFile);
 
 	return 0;
 }
