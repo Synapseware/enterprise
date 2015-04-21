@@ -4,6 +4,41 @@
 using namespace std;
 
 
+void analyzeSoundFile(const char* filename)
+{
+	FILE * file = fopen(filename, "r");
+	if (NULL == file)
+	{
+		cout << "Could not provide analysis on " << filename << endl;
+		return;
+	}
+
+	// get the size of the file
+	fseek(file, 0, SEEK_END);
+	int filesize = ftell(file);
+	fseek(file, 0, SEEK_SET);
+
+	cout << filename << " is " << filesize << " bytes in length." << endl;
+	uint8_t * buffer = (uint8_t*) malloc(filesize * sizeof(uint8_t));
+
+	// read the entire file in
+	uint8_t data = 0, largest = 0, smallest = 255;
+	while (fread(&data, 1, 1, file) > 0)
+	{
+		if (smallest > data)
+			smallest = data;
+		if (largest < data)
+			largest = data;
+	}
+	fclose(file);
+
+	cout << "Largest change: " << largest - smallest << endl;
+
+	//cout << "Loaded " << filesize << " bytes into memory from " << filename << endl;
+
+	free(buffer);
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Converts a WAV file to an AVW file, the intermediary format
 bool convertFile(const char* inputFile)
@@ -39,6 +74,9 @@ bool convertFile(const char* inputFile)
 		cout << "Error: Parsing failed." << endl;
 	}
 
+	//analyzeSoundFile(outputFile);
+
+	free(outputFile);
 	delete(parser);
 
 	return true;
