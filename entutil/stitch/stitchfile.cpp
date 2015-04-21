@@ -4,7 +4,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Processes the source files and generates the output file
-bool StitchFile::Process(const char * outputFile, const char[] sourceFiles, int fileCount, unsigned short pageSize)
+bool StitchFile::Process(const char * outputFile, const char* sourceFiles[], int fileCount, int pageSize)
 {
 	ofstream outfile;
 	outfile.open(outputFile, ios::out | ios::binary);

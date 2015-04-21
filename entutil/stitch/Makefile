@@ -1,3 +1,6 @@
 
+TARGET = stitch
+
+
 all:
-	g++ stitchfile.cpp stitch.cpp -o stitch
+	g++ stitchfile.cpp $(TARGET).cpp -o $(TARGET)
