@@ -124,6 +124,7 @@ uint8_t Sermem::putFile()
 	return TRANSFER_SUCCESS;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Gets another byte to send
 void Sermem::getFileCallback(void)
 {
@@ -151,7 +152,6 @@ void Sermem::getFileCallback(void)
 		_uart->write(data);
 	}
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Reads all the data from the chip and sends it to the host
