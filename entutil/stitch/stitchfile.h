@@ -41,7 +41,7 @@ public:
 	} SOUND_HEADER;									// 2 + 42 * 6 bytes = 254 bytes
 
 
-	bool Process(const char* outputFile, const char[] sourceFiles, int fileCount, unsigned short pageSize);
+	bool Process(const char* outputFile, const char* sourceFiles[], int fileCount, int pageSize);
 private:
 };
 
