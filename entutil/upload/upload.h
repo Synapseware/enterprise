@@ -4,10 +4,10 @@
 
 #include <iostream>
 #include <stdio.h>
-#include <fstream>
-#include <stdint.h>
-#include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <fstream>
+#include <string.h>
 #include <termios.h>
 #include <fcntl.h>
 #include <errno.h>
