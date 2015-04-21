@@ -6,7 +6,7 @@ int open_port(const char* port)
 {
 	int fd; // file description for the serial port
 	
-	fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY);
+	fd = open(port, O_RDWR | O_NOCTTY); //| O_NDELAY);
 	
 	if (fd == -1) // if open is unsucessful
 	{
@@ -142,20 +142,17 @@ bool processUpload(int fd, const char* filename)
 	writeBytes(fd, buffer, 1);
 	waitForAck(fd);
 	cout << "Entered auto mode" << endl;
-	sleep(1);
 
 	// enter write mode
 	buffer[0] = 'W';
 	writeBytes(fd, buffer, 1);
 	waitForAck(fd);
 	cout << "Entered write mode" << endl;
-	sleep(1);
 
 	// get page size
 	readBytes(fd, buffer, 2);
 	uint16_t pageSize = *(uint16_t*) buffer;
 	cout << "Enterprise says pagesize is " << pageSize << endl;
-	sleep(1);
 
 	// validate filesize against pagesize
 	if (pageSize % fileSize != 0)
