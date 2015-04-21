@@ -12,9 +12,10 @@
 
 #include <events/events.h>
 #include <uart/uart.h>
-#include <sermem/sermem.h>
+
 
 #include "effects.h"
+#include "sermem.h"
 
 
 void init(void);

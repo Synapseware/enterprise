@@ -78,7 +78,6 @@ LIBSDIR = ../libs
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(LIBSDIR)/drivers/at24c/at24c.c			\
-	$(LIBSDIR)/sermem/sermem.c					\
 	$(LIBSDIR)/twi/i2c.c						\
 	$(LIBSDIR)/spi/spi.c
 
@@ -86,6 +85,7 @@ SRC = $(LIBSDIR)/drivers/at24c/at24c.c			\
 # List C++ source files here. (C dependencies are automatically generated.)
 CPPSRC = $(TARGET).cpp							\
 	effects.cpp							 		\
+	sermem.cpp									\
 	drivers/nacelle.cpp	 						\
 	$(LIBSDIR)/events/events.cpp				\
 	$(LIBSDIR)/uart/uart.cpp
@@ -93,10 +93,11 @@ CPPSRC = $(TARGET).cpp							\
 
 DEFS  = -DTWI_SPEED=400
 DEFS += -DBAUD=57600
-#DEFS += -DSAMPLE_RATE=8000
+DEFS += -DSAMPLE_RATE=8000
 DEFS += -DMAX_EVENT_RECORDS=24
 DEFS += -DSPI_CLK_4
 DEFS += -DBoard_Enterprise
+
 
 # List Assembler source files here.
 #	 Make them always end in a capital .S.  Files ending in a lowercase .s
@@ -607,8 +608,11 @@ clean_list :
 	$(REMOVE) $(TARGET).map
 	$(REMOVE) $(TARGET).sym
 	$(REMOVE) $(TARGET).lss
+	$(REMOVE) $(TARGET).lst
 	$(REMOVE) $(SRC:%.c=$(OBJDIR)/%.o)
 	$(REMOVE) $(SRC:%.c=$(OBJDIR)/%.lst)
+	$(REMOVE) $(CPPSRC:%.cpp=$(OBJDIR)/%.o)
+	$(REMOVE) $(CPPSRC:%.cpp=$(OBJDIR)/%.lst)
 	$(REMOVE) $(SRC:.c=.s)
 	$(REMOVE) $(SRC:.c=.d)
 	$(REMOVE) $(SRC:.c=.i)
