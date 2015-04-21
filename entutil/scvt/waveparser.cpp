@@ -24,8 +24,7 @@ const char* WaveData::buffer(void)
 }
 
 
-
-WaveData * WaveParser::parse(const char* filename)
+WaveData * WaveParser::parse(FILE * file)
 {
 	// WAV header format:
 	// https://ccrma.stanford.edu/courses/422/projects/WaveFormat/
@@ -78,108 +77,112 @@ WaveData * WaveParser::parse(const char* filename)
 	*/
 
 	char buff[16];
-	ifstream data(filename, ios::in | ios::binary);
 
 	// make sure this is RIFF file
-	data.seekg(0);
-	data.read(&buff[0], 4);
+	fseek(file, 0, SEEK_SET);
+	fread(buff, 4, 1, file);
 	if (0 != strncmp("RIFF", buff, 4)) // 52-49-46-46
 	{
-		cout << "File is not in RIFF format.\n";
+		cout << "File is not in RIFF format." << endl;
 		return NULL;
 	}
+	//cout << "Valid RIFF format detected." << endl;
 
 	// make sure this is a WAVE file
-	data.seekg(8);
-	data.read(buff, 4);
+	fseek(file, 8, SEEK_SET);
+	fread(buff, 4, 1, file);
 	if (0 != strncmp("WAVE", buff, 4)) // 57-41-56-45
 	{
-		cout << "File is not in WAV format.\n";
+		cout << "File is not in WAV format." << endl;
 		return NULL;
 	}
+	//cout << "Valid WAVE format detected." << endl;
 
 	// find the "fmt " chunk length
-	int format = 0;
-	data.seekg(16);
-	data.read((char*)&format, 4);
-	int formatEnd = format + data.tellg();
+	int formatEnd = 0;
+	fseek(file, 16, SEEK_SET);
+	fread(&formatEnd, 4, 1, file);
+	formatEnd += ftell(file);
 
 	// get the compression code
 	uint16_t compression = 0;
-	data.read((char*)&compression, 2);
+	fread(&compression, 2, 1, file);
 	if (compression != 1)
 	{
-		cout << "Compression code is invalid: " << compression << "\n";
+		cout << "Error: Compression code is invalid: " << compression << endl;
 		return NULL;
 	}
+	//cout << "No compression detected." << endl;
 
 	// get the channel count
 	uint16_t channels = 0;
-	data.read((char*)&channels, 2);
+	fread(&channels, 2, 1, file);
 	if (1 != channels)
 	{
-		cout << "Can only read single channel audio files.\n";
+		cout << "Error: Can only read single channel audio files." << endl;
 		return NULL;
 	}
+	//cout << "Monural audio detected." << endl;
 
 	// get sample rate
 	uint32_t rate = 0;
-	data.read((char*)&rate, 4);
-	if (rate > 22000)
+	fread(&rate, 4, 1, file);
+	if (rate != 8000)
 	{
-		cout << "Sample rate is higher than 22kHz\n";
+		cout << "Error: Sample rate is not 8kHz." << endl;
 		return NULL;
 	}
+	//cout << "Valid sampling rate of 8kHz detected." << endl;
 
 	// skip 6 bytes past the current location...
-	data.seekg(6, ios_base::cur);
+	fseek(file, 6, SEEK_CUR);
 
 	// check the sample resolution
 	uint16_t resolution = 0;
-	data.read((char*)&resolution, 2);
+	fread(&resolution, 2, 1, file);
 	if (8 != resolution)
 	{
-		cout << "Sample size of " << resolution << " is invalid.  Must be 8 bit encoded audio.\n";
+		cout << "Error: Sample size of " << resolution << " is invalid.  Must be 8 bit encoded audio." << endl;
 		return NULL;
 	}
+	//cout << "Valid bit depth of 8 bits detected." << endl;
 
 	// seek to the audio buffer portion
-	data.seekg(formatEnd);
-	cout << "Header ends at " << formatEnd << "\n";
+	fseek(file, formatEnd, SEEK_SET);
+	//cout << "Header ends at " << formatEnd << "" << endl;
 
 	// seek to the data block
 	while (true)
 	{
-		data.read(buff, 4);
+		fread(buff, 4, 1, file);
 		if (0 == strncmp("data", buff, 4))
 		{
-			cout << "Found 'data' block at position " << data.tellg() << "\n";
+			cout << "Found 'data' block at position " << ftell(file) << endl;
 			break;
 		}
 
 		uint32_t next = 0;
-		data.read((char*)&next, 4);
-		data.seekg(next, ios_base::cur);
+		fread(&next, 4, 1, file);
+		fseek(file, next, SEEK_CUR);
 	}
 
 	// get length of audio data
 	uint32_t length = 0;
-	data.read((char*)&length, 4);
+	fread(&length, 4, 1, file);
 	if (length > 16777216)
 	{
-		cout << "sound data is greater than 16MB (24bit address).\n";
+		cout << "Error: Sound data is greater than 16MB (24bit address)." << endl;
 		return NULL;
 	}
 
-	cout << "Valid WAVE file detected:\n";
-	cout << "  Resolution:  " << resolution << " bit\n";
-	cout << "  Sample rate: " << rate << "kHz\n";
-	cout << "  Data length: " << length << "\n";
-	cout << "\n";
+	cout << "Valid WAVE file detected:" << endl;
+	cout << "  Resolution:  " << resolution << " bit" << endl;
+	cout << "  Sample rate: " << rate << "kHz" << endl;
+	cout << "  Data length: " << length << endl;
+	cout << endl;
 
 	char* buffer = (char*) malloc(length);
-	data.read(buffer, length);
-	data.close();
+	fread(buffer, length, 1, file);
 
 	//WaveData(int length, int sampleRate, const char* data, int len);
 	return new WaveData(length, rate, buffer);
