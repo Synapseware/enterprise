@@ -16,6 +16,10 @@
 
 using namespace std;
 
+static const char* ARG_FILE = "-i";
+static const char* ARG_PORT = "-p";
+static const char* ARG_BAUD = "-b";
+static const char* ARG_SAVE = "-s";
 
 void showHelp(void);
 

@@ -33,7 +33,7 @@ private:
 class WaveParser
 {
 public:
-	WaveData * parse(const char* filename);
+	WaveData * parse(FILE * file);
 private:
 };
 
