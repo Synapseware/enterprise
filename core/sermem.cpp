@@ -60,8 +60,6 @@ uint8_t Sermem::putFile()
 
 	// Step 2:
 	// Let host know we are ready by sending the transfer block size
-	// this is byte size * 8.  So for 256 byte blocks, we'd send
-	// 32. 32 * 8 = 256, 256/8 = 32
 	uint16_t page = AT24C1024_PAGE_SIZE;
 	_uart->sendBuff((const char*)&page, sizeof(uint16_t));
 	page = 0;

@@ -4,7 +4,7 @@
 Uart				uart;
 Events				events(MAX_EVENT_RECORDS);
 
-Sermem				spie(&uart);
+Sermem				sermem(&uart);
 SoundEffects		effects(&events);
 
 
@@ -51,7 +51,7 @@ void processCommRequest(void)
 	effects.off();
 
 	_dataReceived = 0;
-	spie.process(_rxData);
+	sermem.process(_rxData);
 	switch (_rxData & 0x5F)
 	{
 		case 'V':
@@ -129,7 +129,7 @@ void init(void)
 	effects.init();
 
 	// initialize SPI EEPROM support
-	spie.init();
+	sermem.init();
 
 	// initialize USART
 	uart.init();
@@ -177,7 +177,7 @@ int main()
 
 	uart.putstrM(PSTR("Enterprise main board booting up...\r\n"));
 
-	spie.showHelp();
+	sermem.showHelp();
 
 	effects.on();
 

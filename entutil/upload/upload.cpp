@@ -80,6 +80,107 @@ bool loadSettings(int* baud, char** port)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Reads the specified number of bytes from the serial port
+bool readBytes(int fd, char* buffer, int bytesToRead)
+{
+	while (bytesToRead)
+	{
+		int bytesRead = read(fd, buffer, bytesToRead);
+		if (bytesRead < 0)
+		{
+			fputs("read failed!\n", stderr);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Waits for an ACK response from the Enterprise (an 'A' character)
+bool waitForAck(int fd)
+{
+	char data = '\0';
+	readBytes(fd, &data, 1);
+	return 'A' == data;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+bool processUpload(int fd, const char* filename)
+{
+	char buffer[128];
+
+	// open file
+	FILE* file = fopen(filename, "r");
+	fseek(file, 0, SEEK_END);
+	int fileSize = ftell(file);
+	fseek(file, 0, SEEK_SET);
+
+	// begin upload processing
+	// Hello = 'A'
+	// StoreFile = 'W'
+	// RetrieveFile = 'R'
+	// Format = 'F'
+	write(fd, "A", 1);
+	waitForAck(fd);
+	cout << "Entered auto mode" << endl;
+
+	// enter write mode
+	write(fd, "W", 1);
+	waitForAck(fd);
+	cout << "Entered write mode" << endl;
+
+	// get page size
+	readBytes(fd, buffer, 2);
+	uint16_t pageSize = *(uint16_t*) buffer;
+	cout << "Enterprise says pagesize is " << pageSize << endl;
+
+	// validate filesize against pagesize
+	if (pageSize % fileSize != 0)
+	{
+		fclose(file);
+		cout << "File does not have valid pagesize alignment." << endl;
+		return false;
+	}
+
+	// write filesize
+	write(fd, (char*)&fileSize, sizeof(uint32_t));
+	if (!waitForAck(fd))
+	{
+		fclose(file);
+		cout << "Filesize is too large for transfer." << endl;
+		return false;
+	}
+	cout << "Filesize is OK" << endl;
+
+	// upload the file
+	char* fileData = (char*) malloc(pageSize * sizeof(char));
+	int pageUploaded = 0;
+	while (fileSize > 0)
+	{
+		fread(fileData, sizeof(fileData), 1, file);
+		write(fd, fileData, sizeof(fileData));
+
+		if (!waitForAck(fd))
+		{
+			cout << "Block transfer failed!" << endl;
+			break;
+		}
+
+		fileSize -= pageSize;
+
+		pageUploaded++;
+		printf("Page uploaded: %d\n", pageUploaded);
+	}
+
+	free(fileData);
+
+	fclose(file);
+
+	return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // uploads the file to the Enterprise
 void upload(int baud, const char* port, const char* filename)
 {
@@ -89,13 +190,8 @@ void upload(int baud, const char* port, const char* filename)
 
 	configure_port(fd, baud);
 
-	// begin upload processing
-	// Hello = 'A'
-	// StoreFile = 'W'
-	// RetrieveFile = 'R'
-	// Format = 'F'
-	write(fd, "A", 1);
-	
+	if (processUpload(fd, filename))
+		cout << "Successfully uploaded EEPROM image file." << endl;
 
 	close(fd);
 }
