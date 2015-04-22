@@ -18,15 +18,8 @@ void getFileCallbackHandler(eventState_t state)
 // Constructor
 Sermem::Sermem(Uart* uart)
 {
-	_uart = uart;
+	_uart					= uart;
 
-	init();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Initialize (or reinitialize)
-void Sermem::init(void)
-{
 	_transferPageComplete	= 0;
 	_bytesTransfered		= 0;
 	_transferSize			= 0;
@@ -271,7 +264,6 @@ void Sermem::showHelp(void)
   R: Retrieves the entire contents of the EEPROM\r\n\
   W: Stores a file on the EEPROM\r\n\
   F: Formats the EEPROM\r\n\
-  I: Interactive mode\r\n\
   H: Display help (this text)\r\n"));
 }
 

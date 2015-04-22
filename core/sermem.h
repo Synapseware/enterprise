@@ -38,8 +38,9 @@ class Sermem
 {
 public:
 	Sermem(Uart* uart);
-	void init(void);
+
 	void showHelp(void);
+
 	uint8_t putFile(void);
 	uint8_t getFile(void);
 	void format(void);

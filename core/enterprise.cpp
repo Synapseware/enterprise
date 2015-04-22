@@ -45,29 +45,28 @@ static void receiveCallback(char data)
 static void processCommRequest(void)
 {
 	if (!_dataReceived)
-	{
 		return;
-	}
 
-	uart.putstrM(PSTR("Effects off\r\n"));
+	// don't process any more coms data
 	uart.endReceive();
 
+	// shutoff effects while processing request
 	effects.off();
-	uart.putstrM(PSTR("Effects off\r\n"));
 
-	_dataReceived = 0;
-	sermem.process(_rxData);
 	switch (_rxData & 0x5F)
 	{
 		case 'V':
 			uart.putstrM(PSTR("\r\nVersion: 0.5\r\n"));
 			break;
+		default:
+			sermem.process(_rxData);
+			break;
 	}
 
-	effects.on();
-
 	// setup the UART receive interrupt handler
+	_dataReceived = 0;
 	uart.beginReceive(&receiveCallback);
+	effects.on();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -75,7 +74,7 @@ static void processCommRequest(void)
 volatile uint8_t _wakingUp = 0;
 static void enableButton(eventState_t state)
 {
-	
+
 	_wakingUp = 0;
 }
 
@@ -135,9 +134,6 @@ static void init(void)
 
 	// initialize USART
 	uart.init();
-
-	// initialize SPI EEPROM support
-	sermem.init();
 
 	// setup the UART receive interrupt handler
 	uart.beginReceive(&receiveCallback);
@@ -233,4 +229,35 @@ ISR(SWITCH_PCVECT)
 
 	// require user to press button for at least 1/8 second
 	events.registerOneShot(checkButton, 1000, EVENT_STATE_NONE);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// receive buffer interrupt vector
+ISR(USART_RX_vect)
+{
+	#ifdef serial_led_on
+	serial_led_on();
+	#endif
+
+	uint8_t data = UDR0;
+	uart.receiveHandler(data);
+
+	#ifdef serial_led_off
+	serial_led_off();
+	#endif
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// transmit interrupt vector
+ISR(USART_TX_vect)
+{
+	#ifdef serial_led_on
+	serial_led_on();
+	#endif
+
+	uart.transmitHandler();
+
+	#ifdef serial_led_off
+	serial_led_off();
+	#endif
 }
