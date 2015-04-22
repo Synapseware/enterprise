@@ -35,8 +35,10 @@ volatile char _rxData = 0;
 volatile char _dataReceived = 0;
 void receiveCallback(char data)
 {
+	serial_led_on();
 	_rxData = data;
 	_dataReceived = 0xff;
+	serial_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -120,10 +122,12 @@ void checkButton(eventState_t state)
 void init(void)
 {
 	play_led_en();
-	play_led_off();
-
 	dbg_led_en();
+	serial_led_en();
+
+	play_led_off();
 	dbg_led_on();
+	serial_led_off();
 
 	// initialize effects
 	effects.init();
