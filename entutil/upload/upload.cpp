@@ -88,9 +88,11 @@ bool readBytes(int fd, char* buffer, int bytesToRead)
 		int bytesRead = read(fd, buffer, bytesToRead);
 		if (bytesRead < 0)
 		{
-			fputs("read failed!\n", stderr);
+			cout << "read failed!" << endl;
 			return false;
 		}
+
+		bytesToRead -= bytesRead;
 	}
 
 	return true;
@@ -103,6 +105,21 @@ bool waitForAck(int fd)
 	char data = '\0';
 	readBytes(fd, &data, 1);
 	return 'A' == data;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Performs a blocking write on the serial port
+bool writeBytes(int fd, char* buffer, int bytesToWrite)
+{
+	while (bytesToWrite)
+	{
+		int bytesWritten = write(fd, buffer, bytesToWrite);
+		if (bytesWritten < 0)
+		{
+			cout << "Failed to write data to serial port!" << endl;
+		}
+		bytesToWrite -= bytesWritten;
+	}
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -121,19 +138,24 @@ bool processUpload(int fd, const char* filename)
 	// StoreFile = 'W'
 	// RetrieveFile = 'R'
 	// Format = 'F'
-	write(fd, "A", 1);
+	buffer[0] = 'A';
+	writeBytes(fd, buffer, 1);
 	waitForAck(fd);
 	cout << "Entered auto mode" << endl;
+	sleep(1);
 
 	// enter write mode
-	write(fd, "W", 1);
+	buffer[0] = 'W';
+	writeBytes(fd, buffer, 1);
 	waitForAck(fd);
 	cout << "Entered write mode" << endl;
+	sleep(1);
 
 	// get page size
 	readBytes(fd, buffer, 2);
 	uint16_t pageSize = *(uint16_t*) buffer;
 	cout << "Enterprise says pagesize is " << pageSize << endl;
+	sleep(1);
 
 	// validate filesize against pagesize
 	if (pageSize % fileSize != 0)
@@ -144,7 +166,7 @@ bool processUpload(int fd, const char* filename)
 	}
 
 	// write filesize
-	write(fd, (char*)&fileSize, sizeof(uint32_t));
+	writeBytes(fd, (char*)&fileSize, sizeof(uint32_t));
 	if (!waitForAck(fd))
 	{
 		fclose(file);
@@ -159,7 +181,7 @@ bool processUpload(int fd, const char* filename)
 	while (fileSize > 0)
 	{
 		fread(fileData, sizeof(fileData), 1, file);
-		write(fd, fileData, sizeof(fileData));
+		writeBytes(fd, fileData, sizeof(fileData));
 
 		if (!waitForAck(fd))
 		{
@@ -190,6 +212,7 @@ void upload(int baud, const char* port, const char* filename)
 
 	configure_port(fd, baud);
 
+	cout << "Starting upload processing..." << endl;
 	if (processUpload(fd, filename))
 		cout << "Successfully uploaded EEPROM image file." << endl;
 
@@ -228,13 +251,13 @@ int mapBaud(int baud)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 int main(int argc, char* argv[])
 {
-	if (argc < 3)
+	if (argc < 2)
 	{
 		showHelp();
 		return 0;
 	}
 
-	int baud = 57600;
+	int baud = 115200;
 	char* port = NULL;
 	char* file = NULL;
 	bool save = false;
@@ -245,9 +268,9 @@ int main(int argc, char* argv[])
 	for (int i = 1; i < argc; i++)
 	{
 		if (0 == strncmp("-p", argv[i], 2))
-			port = argv[i + 1];
+			port = argv[++i];
 		else if (0 == strncmp("-b", argv[i], 2))
-			baud = atoi(argv[i + 1]);
+			baud = atoi(argv[++i]);
 		else if (0 == strncmp("-s", argv[i], 2))
 			save = true;
 		else
@@ -280,9 +303,9 @@ int main(int argc, char* argv[])
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 void showHelp(void)
 {
-	cout << "upload -i {filename} -p {serial port} -b {baud rate} -s" << endl;
+	cout << "upload {filename} -p {serial port} -b {baud rate} -s" << endl;
 	cout << "Uploads an EEPROM effects file to the Enterprise." << endl;
-	cout << "  -i  The EEPROM image file to upload to the Enterprise." << endl;
+	cout << "  {fielname} The EEPROM image file to upload to the Enterprise." << endl;
 	cout << "  -b  Specify the baud rate to use.  Must be a standard value (e.g. 9600, 57600, etc)." << endl;
 	cout << "  -p  Specify the serial port to use." << endl;
 	cout << "         List serial ports with 'll /dev/tty*' at the command prompt." << endl;
