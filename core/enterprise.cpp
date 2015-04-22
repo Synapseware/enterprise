@@ -14,7 +14,7 @@ void fadeStatusLed(eventState_t state)
 {
 	if (_idx == 0)
 		dbg_led_on();
-	if (_idx >= _val)
+	else if (_idx >= _val)
 		dbg_led_off();
 	_idx += 4;
 }
@@ -129,14 +129,17 @@ void init(void)
 	dbg_led_on();
 	serial_led_off();
 
+	serial_led_en();
+	serial_led_off();
+
+	// initialize USART
+	uart.init();
+
 	// initialize effects
 	effects.init();
 
 	// initialize SPI EEPROM support
 	sermem.init();
-
-	// initialize USART
-	uart.init();
 
 	// setup the UART receive interrupt handler
 	uart.beginReceive(&receiveCallback);
@@ -167,7 +170,7 @@ void init(void)
 
 
 	events.registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
-	events.registerEvent(readNextStatusVal, 500, EVENT_STATE_NONE);
+	events.registerEvent(readNextStatusVal, 750, EVENT_STATE_NONE);
 
 	// enable all interrupts
 	sei();
