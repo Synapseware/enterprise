@@ -23,7 +23,7 @@ int main(void);
 
 
 const static uint8_t SLEEPY_EYES[] PROGMEM = {
-	0, 3, 7, 12, 19, 22, 31, 63, 127, 255, 127, 63, 31, 22, 19, 12, 7, 3, 0, 0, 0, 0, 0, 0
+	3, 3, 7, 12, 19, 22, 31, 63, 127, 63, 31, 22, 19, 12, 7, 3, 3, 3, 3, 3, 3
 };
 #define SLEEPY_EYES_LEN sizeof(SLEEPY_EYES)/sizeof(uint8_t)
 
