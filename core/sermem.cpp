@@ -22,7 +22,6 @@ Sermem::Sermem(Uart* uart)
 
 	_transferPageComplete	= 0;
 	_bytesTransfered		= 0;
-	_transferSize			= 0;
 
 	_autoMode				= 0;
 
@@ -33,68 +32,37 @@ Sermem::Sermem(Uart* uart)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Retrieves a file from the user.  Host to client transfer works as follows:
-// HOST:  The PC
-// CLIENT: This device
-// 1: Host sends ACK byte when ready
-// 2: Client responds with transfer block size
-// 3: Host responds with total transfer size (must be a multiple of the block size)
-// 4: Client response with ack if size OK, or nack if too large
-// 5: Host starts sending data, 1 block at a time
-//		5a.  When block done, host waits for ACK/NACK before sending next block
-// 6: Client responds with ACK when block write is complete
+// Receives a file from a serial transfer and stores it in the EEPROM
 uint8_t Sermem::putFile()
 {
-	// Step 0:
-	// Client sent a 'W' to enter write mode
-	
-	// Step 1:
-	// Let host know we are in WRITE func
-	_uart->write(TRANSFER_ACK);
+	uint32_t transferSize = 0;
+	uint16_t bytesTransfered = 0;
 
-	// Step 2:
-	// Let host know we are ready by sending the transfer block size
-	uint16_t page = AT24C1024_PAGE_SIZE;
-	_uart->sendBuff((const char*)&page, sizeof(uint16_t));
-	page = 0;
-
-	// Step 3:
 	// Host will now give us 4 bytes, indicating the size of the transfer.
-	_uart->receiveBuff((char*)&_transferSize, sizeof(uint32_t));
-
-	// Step 4:
-	// Check that we can accept the transfer!
-	if (_transferSize > AT24C1024_MAX_DATA)
+	_uart->receiveBuff((char*)&transferSize, sizeof(uint32_t));
+	if (transferSize > AT24C1024_MAX_DATA)
 	{
-		// transfer is too large - abort!
 		_uart->write(TRANSFER_NACK);
 		return TRANSFER_ERR;
 	}
 
 	// begin the page write, starting with page 0
+	uint16_t page = 0;
 	ee_putByteStart(page++);
 
-	// transfer size is good (less than AT24C1024_MAX_DATA bytes)
-	// host will now begin to send data
-	// setup for async receive
-
-	// ACK the size of the transfer
-	_uart->write(TRANSFER_ACK);
-
 	// get data!
-	_bytesTransfered = 0;
-	while (0 != _transferSize)
+	while (transferSize)
 	{
 		// increment the byte counter and save the byte to the EEPROM
 		uint8_t data = _uart->read();
 		ee_putByte(data);
 
 		// update transfer info
-		_bytesTransfered++;
-		_transferSize--;
+		bytesTransfered++;
+		transferSize--;
 
 		// wait for a pages worth of data, or the end of the write transmission of data
-		if (_bytesTransfered != AT24C1024_PAGE_SIZE)
+		if (bytesTransfered != AT24C1024_PAGE_SIZE)
 			continue;
 
 		// end the write cycle
@@ -104,14 +72,15 @@ uint8_t Sermem::putFile()
 		ee_poll();
 
 		// close the current page
-		_bytesTransfered = 0;
+		bytesTransfered = 0;
 		ee_putByteStart(page++);
 
 		// ack the page
 		_uart->write(TRANSFER_ACK);
 	}
 
-	if (_bytesTransfered != 0)
+	// final wrap up
+	if (bytesTransfered != 0)
 	{
 		ee_putBytesEnd();
 		ee_poll();
@@ -294,6 +263,7 @@ void Sermem::process(char data)
 
 		// write new EEPROM data
 		case 'W':
+			_uart->write(TRANSFER_ACK);
 			putstr(PSTR("Waiting for file transfer.\r\n"));
 			if (putFile())
 				putstr(PSTR("File successfully transfered to EEPROM.\r\n"));

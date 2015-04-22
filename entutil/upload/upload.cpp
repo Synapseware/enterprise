@@ -133,44 +133,39 @@ bool processUpload(int fd, const char* filename)
 	int fileSize = ftell(file);
 	fseek(file, 0, SEEK_SET);
 
+	// don't allow excessive transfers
+	if (fileSize > 2^18)
+	{
+		fclose(file);
+		cout << "EEPROM image size exceeds maximum storage capacity on the Enterprise (256kb)" << endl;
+		return false;
+	}
+
 	// begin upload processing
-	// Hello = 'A'
-	// StoreFile = 'W'
-	// RetrieveFile = 'R'
-	// Format = 'F'
+	// Send a 'A' to enter auto mode
+	// 		Wait for ACK
+	// Send a 'W' to enter write mode
+	//		Wait for ACK
+	// Send first page of data
+	//		Wait for ACK
+	// Send remaining pages of data
+	//		Wait for ACK at the end of each page
+	// Client sends NACK when complete
+
 	buffer[0] = 'A';
-	writeBytes(fd, buffer, 1);
+	write(fd, buffer, 1);
 	waitForAck(fd);
-	cout << "Entered auto mode" << endl;
+	cout << "Entered AUTO mode" << endl;
 
 	// enter write mode
 	buffer[0] = 'W';
-	writeBytes(fd, buffer, 1);
+	write(fd, buffer, 1);
 	waitForAck(fd);
-	cout << "Entered write mode" << endl;
+	cout << "Entered WRITE mode" << endl;
 
-	// get page size
-	readBytes(fd, buffer, 2);
-	uint16_t pageSize = *(uint16_t*) buffer;
-	cout << "Enterprise says pagesize is " << pageSize << endl;
-
-	// validate filesize against pagesize
-	if (pageSize % fileSize != 0)
-	{
-		fclose(file);
-		cout << "File does not have valid pagesize alignment." << endl;
-		return false;
-	}
-
-	// write filesize
-	writeBytes(fd, (char*)&fileSize, sizeof(uint32_t));
-	if (!waitForAck(fd))
-	{
-		fclose(file);
-		cout << "Filesize is too large for transfer." << endl;
-		return false;
-	}
-	cout << "Filesize is OK" << endl;
+	// let client know size of transfer
+	write(fd, &fileSize, 1);
+	waitForAck(fd);
 
 	// upload the file
 	char* fileData = (char*) malloc(pageSize * sizeof(char));
@@ -178,7 +173,7 @@ bool processUpload(int fd, const char* filename)
 	while (fileSize > 0)
 	{
 		fread(fileData, sizeof(fileData), 1, file);
-		writeBytes(fd, fileData, sizeof(fileData));
+		write(fd, fileData, sizeof(fileData));
 
 		if (!waitForAck(fd))
 		{
