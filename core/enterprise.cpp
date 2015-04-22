@@ -1,16 +1,15 @@
 #include "enterprise.h"
 
-
-Uart				uart;
-Events				events(MAX_EVENT_RECORDS);
-
-Sermem				sermem(&uart);
-SoundEffects		effects(&events);
+// declare enterprise globals
+static	Uart				uart;
+static	Events				events(MAX_EVENT_RECORDS);
+static	Sermem				sermem(&uart);
+static	SoundEffects		effects(&events);
 
 
 volatile uint8_t _idx = 0;
 volatile uint8_t _val = 0;
-void fadeStatusLed(eventState_t state)
+static void fadeStatusLed(eventState_t state)
 {
 	if (_idx == 0)
 		dbg_led_on();
@@ -20,7 +19,7 @@ void fadeStatusLed(eventState_t state)
 }
 
 volatile uint8_t _i = 0;
-void readNextStatusVal(eventState_t state)
+static void readNextStatusVal(eventState_t state)
 {
 	_val = pgm_read_byte(&SLEEPY_EYES[_i++]);
 	if (_i >= SLEEPY_EYES_LEN)
@@ -33,24 +32,28 @@ void readNextStatusVal(eventState_t state)
 //	gets called by the UART/USART when a byte of data has been received
 volatile char _rxData = 0;
 volatile char _dataReceived = 0;
-void receiveCallback(char data)
+static void receiveCallback(char data)
 {
-	serial_led_on();
+	play_led_on();
 	_rxData = data;
 	_dataReceived = 0xff;
-	serial_led_off();
+	play_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // processes a communications request from the serial port
-void processCommRequest(void)
+static void processCommRequest(void)
 {
 	if (!_dataReceived)
+	{
 		return;
+	}
 
+	uart.putstrM(PSTR("Effects off\r\n"));
 	uart.endReceive();
 
 	effects.off();
+	uart.putstrM(PSTR("Effects off\r\n"));
 
 	_dataReceived = 0;
 	sermem.process(_rxData);
@@ -70,14 +73,15 @@ void processCommRequest(void)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // enables the button after a timeout
 volatile uint8_t _wakingUp = 0;
-void enableButton(eventState_t state)
+static void enableButton(eventState_t state)
 {
+	
 	_wakingUp = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // checks the state of the button
-void checkButton(eventState_t state)
+static void checkButton(eventState_t state)
 {
 	// ignore any button presses after waking up
 	if (_wakingUp)
@@ -119,24 +123,18 @@ void checkButton(eventState_t state)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void init(void)
+static void init(void)
 {
 	play_led_en();
 	dbg_led_en();
 	serial_led_en();
 
 	play_led_off();
-	dbg_led_on();
-	serial_led_off();
-
-	serial_led_en();
+	dbg_led_off();
 	serial_led_off();
 
 	// initialize USART
 	uart.init();
-
-	// initialize effects
-	effects.init();
 
 	// initialize SPI EEPROM support
 	sermem.init();
@@ -168,12 +166,25 @@ void init(void)
 	SWITCH_PCMSK	|= (1<<SWITCH_PCINT);
 	PCICR			|= (1<<SWITCH_PCICR);
 
-
 	events.registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
 	events.registerEvent(readNextStatusVal, 750, EVENT_STATE_NONE);
 
 	// enable all interrupts
 	sei();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void initEffects(void)
+{
+	char message[10];
+
+	// initialize effects
+	uint16_t samples = effects.init();
+	sprintf(message, "%d", samples);
+
+	uart.putstrM(PSTR("Found "));
+	uart.putstr(message);
+	uart.putstrM(PSTR(" effects on EEPROM\r\n"));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -183,12 +194,14 @@ int main()
 	init();
 
 	uart.putstrM(PSTR("Enterprise main board booting up...\r\n"));
-
 	sermem.showHelp();
 
-	effects.on();
+	initEffects();
 
+	effects.on();
 	effects.startSample(SFX_EFX_OPENING);
+
+	uart.putstrM(PSTR("Effects on.\r\n"));
 
 	while(1)
 	{

@@ -8,7 +8,10 @@
 #include "board.h"
 #include <events/events.h>
 #include <uart/uart.h>
+
+extern "C" {
 #include <drivers/at24c/at24c.h>
+}
 
 #include "enterprise.h"
 
@@ -97,6 +100,7 @@ public:
 		#define		EEPROM_SIZE		1024
 	#endif
 
+	/*
 	typedef struct
 	{
 		uint8_t		RecordType;
@@ -108,11 +112,10 @@ public:
 	{
 		uint8_t		ItemIndex;
 	} EVENT_ENTRY;
-
+	*/
 
 	SoundEffects(Events* events);
-	void init(void);
-	void initializeEffects(void);
+	uint16_t init(void);
 	void on(void);
 	void off(void);
 	uint8_t playing(void);
@@ -144,8 +147,8 @@ private:
 		// load the header into the header struct
 		ee_readBytes(0, sizeof(SOUND_HEADER), (uint8_t*) &_header);
 
-        if (_header.samples > 0)
-            serial_led_on();
+		if (_header.samples > 0)
+			serial_led_on();
 	}
 };
 

@@ -18,7 +18,6 @@
 #include "sermem.h"
 
 
-void init(void);
 int main(void);
 
 
