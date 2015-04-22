@@ -279,8 +279,6 @@ void Sermem::showHelp(void)
 // Processes serial data
 void Sermem::process(char data)
 {
-	dbg_led_on();
-
 	switch (data & 0x5F) // mask all characters to upper-case ASCII :)
 	{
 		// auto-mode
@@ -323,7 +321,5 @@ void Sermem::process(char data)
 			showHelp();
 			break;
 	}
-
-	dbg_led_off();
 }
 

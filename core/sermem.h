@@ -2,6 +2,7 @@
 #define _SPIEEPROM_H
 
 
+extern "C" {
 #include <types.h>
 #include <stdio.h>
 #include <avr/io.h>
@@ -9,8 +10,8 @@
 #include <avr/sleep.h>
 #include <avr/pgmspace.h>
 
-
 #include <drivers/at24c/at24c.h>
+}
 #include <uart/uart.h>
 #include <events/events.h>
 

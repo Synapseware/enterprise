@@ -65,6 +65,7 @@ SoundEffects::SoundEffects(Events* events)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Runs on the 8kHz event handler to play back PWM audio!
 void SoundEffects::sampleCallback(void)
 {
 	// don't do anything if sound-effects are not enabled
@@ -77,36 +78,34 @@ void SoundEffects::sampleCallback(void)
 		_ambientPos = 0;
 
 	// just play the background sound if there's no SFX sample
-	if (SAMPLE_PLAYING != _playState)
+	if (SAMPLE_PLAYING != _playState || 0 == _header.samples)
 	{
 		OCR2B = _ambient;
 		return;
 	}
-	else
-	{
-		// determine sample state & ambient mix-in
-		if (0 == _length)
-		{
-			// ramp down
-			if (_sample < 128)
-				_sample++;
-			else if (_sample > 128)
-				_sample--;
-			else
-			{
-				_playState = SAMPLE_NONE;
-				play_led_off();
-			}
 
-			OCR2B = ((uint16_t)_sample + (uint16_t)_ambient) >> 1;
-		}
+	// determine sample state & ambient mix-in
+	if (0 == _length)
+	{
+		// ramp down
+		if (_sample < 128)
+			_sample++;
+		else if (_sample > 128)
+			_sample--;
 		else
 		{
-			_length--;
-
-			// read the next sample value as long as we have data to read
-			ee_readA(&readCompleteHandler);
+			_playState = SAMPLE_NONE;
+			play_led_off();
 		}
+
+		OCR2B = ((uint16_t)_sample + (uint16_t)_ambient) >> 1;
+	}
+	else
+	{
+		_length--;
+
+		// read the next sample value as long as we have data to read
+		ee_readA(&readCompleteHandler);
 	}
 }
 
@@ -114,6 +113,8 @@ void SoundEffects::sampleCallback(void)
 void SoundEffects::readComplete(uint8_t sfxdata)
 {
 	_sample = sfxdata;
+
+	// take the average of the sample and the ambient effects
 	OCR2B = ((uint16_t)_sample + (uint16_t)_ambient) >> 1;
 
 	if (!_length)
@@ -161,7 +162,7 @@ uint8_t SoundEffects::playing(void)
 void SoundEffects::startSample(uint8_t index)
 {
 	// don't do anything if we are playing a sample
-	if (SAMPLE_NONE != _playState)
+	if (SAMPLE_NONE != _playState || 0 == _header.samples)
 		return;
 
 	// make sure we don't try to start an invalid sample :)
@@ -433,26 +434,8 @@ void SoundEffects::playSequence(void)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// loads the effects patterns from eeprom and sets up the callback events
-void SoundEffects::initializeEffects(void)
-{
-	EVENT_HEADER hdr;
-	for (uint16_t i = effectsStart; i < EEPROM_SIZE;)
-	{
-		eeprom_read_block(&hdr, &i, sizeof(EVENT_HEADER));
-
-		// move index to next header entry
-		i += sizeof (EVENT_HEADER) + (hdr.Count * sizeof(EVENT_ENTRY));
-
-		// break enumeration if null record
-		if (hdr.RecordType == RT_NULL)
-			break;
-	}
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Initializes the global effects variables and primary effects events
-void SoundEffects::init(void)
+uint16_t SoundEffects::init(void)
 {
 	audioOut_en();
 	ampPwr_en();
@@ -472,8 +455,15 @@ void SoundEffects::init(void)
 	// load the header data
 	fillHeader();
 
+	// this handler plays the main ambient sound
 	_events->registerEvent(sampleCallbackHandler, 0, this);
-	_events->registerEvent(playAmbientHandler, 2650, this);
-	_events->registerEvent(playSequenceHandler, 1000, this);
-	_events->registerEvent(playBackgroundHandler, 28500, this);
+
+	if (_header.samples > 0)
+	{
+		_events->registerEvent(playAmbientHandler, 2650, this);		// plays random ambient sounds
+		_events->registerEvent(playSequenceHandler, 1000, this);	// plays special sound sequences
+		_events->registerEvent(playBackgroundHandler, 28500, this);	// plays random background sounds
+	}
+
+	return _header.samples;
 }
