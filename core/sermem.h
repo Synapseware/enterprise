@@ -14,6 +14,8 @@
 #include <uart/uart.h>
 #include <events/events.h>
 
+#include "board.h"
+
 
 #define CMD_ACK					'A'
 #define CMD_COMPLETE			'C'

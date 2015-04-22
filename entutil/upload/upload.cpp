@@ -244,14 +244,14 @@ int main(int argc, char* argv[])
 	// -b 9600 -p /dev/ttyACM0 -i effects.bin -s
 	for (int i = 1; i < argc; i++)
 	{
-		if (0 == strncmp("-i", argv[i], 2))
-			file = argv[i + 1];
-		else if (0 == strncmp("-p", argv[i], 2))
+		if (0 == strncmp("-p", argv[i], 2))
 			port = argv[i + 1];
 		else if (0 == strncmp("-b", argv[i], 2))
 			baud = atoi(argv[i + 1]);
 		else if (0 == strncmp("-s", argv[i], 2))
 			save = true;
+		else
+			file = argv[i];
 	}
 
 	int actualBaud = mapBaud(baud);
@@ -259,6 +259,12 @@ int main(int argc, char* argv[])
 	{
 		cout << "The specified baud rate of " << baud << " is not valid." << endl;
 		return -1;
+	}
+
+	if (NULL == file)
+	{
+		cout << "Upload file not found." << endl;
+		return 0;
 	}
 
 	cout << "Uploading " << file << " to the Enterprise on port " << port << " at " << baud << " baud." << endl;

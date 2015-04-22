@@ -2,7 +2,8 @@
 
 
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// connects the ISR with an instance of Sermem
 void getFileCallbackHandler(eventState_t state)
 {
 	if (0 == state)
@@ -13,9 +14,8 @@ void getFileCallbackHandler(eventState_t state)
 }
 
 
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Constructor
 Sermem::Sermem(Uart* uart)
 {
 	_uart = uart;
@@ -24,6 +24,7 @@ Sermem::Sermem(Uart* uart)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Initialize (or reinitialize)
 void Sermem::init(void)
 {
 	_transferPageComplete	= 0;
@@ -278,6 +279,8 @@ void Sermem::showHelp(void)
 // Processes serial data
 void Sermem::process(char data)
 {
+	dbg_led_on();
+
 	switch (data & 0x5F) // mask all characters to upper-case ASCII :)
 	{
 		// auto-mode
@@ -320,5 +323,7 @@ void Sermem::process(char data)
 			showHelp();
 			break;
 	}
+
+	dbg_led_off();
 }
 
