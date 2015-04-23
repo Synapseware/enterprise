@@ -54,6 +54,7 @@ private:
 	Uart*		_uart;
 	uint8_t		_transferPageComplete;
 	uint16_t	_bytesTransfered;
+	uint32_t	_transferSize;
 
 	uint8_t		_autoMode;
 
