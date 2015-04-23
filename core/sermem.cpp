@@ -22,6 +22,7 @@ Sermem::Sermem(Uart* uart)
 
 	_transferPageComplete	= 0;
 	_bytesTransfered		= 0;
+	_transferSize			= 0;
 
 	_autoMode				= 0;
 
@@ -35,23 +36,25 @@ Sermem::Sermem(Uart* uart)
 // Receives a file from a serial transfer and stores it in the EEPROM
 uint8_t Sermem::putFile()
 {
-	uint32_t transferSize = 0;
 	uint16_t bytesTransfered = 0;
 
 	// Host will now give us 4 bytes, indicating the size of the transfer.
-	_uart->receiveBuff((char*)&transferSize, sizeof(uint32_t));
-	if (transferSize > AT24C1024_MAX_DATA)
+	_uart->receiveBuff((char*)&_transferSize, sizeof(uint32_t));
+	if (_transferSize > AT24C1024_MAX_DATA)
 	{
 		_uart->write(TRANSFER_NACK);
 		return TRANSFER_ERR;
 	}
+
+	// Size is OK
+	_uart->write(TRANSFER_ACK);
 
 	// begin the page write, starting with page 0
 	uint16_t page = 0;
 	ee_putByteStart(page++);
 
 	// get data!
-	while (transferSize)
+	while (_transferSize)
 	{
 		// increment the byte counter and save the byte to the EEPROM
 		uint8_t data = _uart->read();
@@ -59,7 +62,7 @@ uint8_t Sermem::putFile()
 
 		// update transfer info
 		bytesTransfered++;
-		transferSize--;
+		_transferSize--;
 
 		// wait for a pages worth of data, or the end of the write transmission of data
 		if (bytesTransfered != AT24C1024_PAGE_SIZE)
@@ -124,15 +127,6 @@ void Sermem::getFileCallback(void)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Reads all the data from the chip and sends it to the host
-// HOST:  This device
-// CLIENT: The PC
-// 1: Host sends ACK byte when ready
-// 2: Client responds with transfer block size
-// 3: Host responds with total transfer size (must be a multiple of the block size)
-// 4: Client response with ack if size OK, or nack if too large
-// 5: Host starts sending data, 1 block at a time
-//		5a.  When block done, host waits for ACK/NACK before sending next block
-// 6: Client responds with ACK when block write is complete
 uint8_t Sermem::getFile(void)
 {
 	// Step 1:
