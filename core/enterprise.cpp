@@ -261,3 +261,16 @@ ISR(USART_TX_vect)
 	serial_led_off();
 	#endif
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Callback handler for the read complete event
+void Effects_readCompleteHandler(uint8_t data)
+{
+	effects.readComplete(data);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Effects_startSampleCompleteHandler(uint8_t result)
+{
+	effects.startSampleComplete(result);
+}

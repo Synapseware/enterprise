@@ -1,7 +1,6 @@
 #include "effects.h"
 
 
-SoundEffects * thisEffects = 0;
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -13,16 +12,6 @@ void sampleCallbackHandler(eventState_t state)
 
 	SoundEffects * effects = (SoundEffects*)state;
 	effects->sampleCallback();
-}
-void readCompleteHandler(uint8_t data)
-{
-	if (0 != thisEffects)
-		thisEffects->readComplete(data);
-}
-void startSampleCompleteHandler(uint8_t result)
-{
-	if (0 != thisEffects)
-		thisEffects->startSampleComplete(result);
 }
 void playAmbientHandler(eventState_t state)
 {
@@ -59,8 +48,6 @@ SoundEffects::SoundEffects(Events* events)
 	_length		 		= 0;
 	_playState	  		= 0;
 	_onoff				= 0;
-
-	thisEffects			= this;
 }
 
 
@@ -105,7 +92,7 @@ void SoundEffects::sampleCallback(void)
 		_length--;
 
 		// read the next sample value as long as we have data to read
-		ee_readA(&readCompleteHandler);
+		ee_readA(&Effects_readCompleteHandler);
 	}
 }
 
@@ -172,7 +159,7 @@ void SoundEffects::startSample(uint8_t index)
 	// setup for sample playback
 	_playState = SAMPLE_LOADING;
 	_length	= _header.effects[index].length;
-	ee_setpageA(_header.effects[index].startPage, &startSampleCompleteHandler);
+	ee_setpageA(_header.effects[index].startPage, &Effects_startSampleCompleteHandler);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
