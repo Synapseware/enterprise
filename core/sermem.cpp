@@ -51,7 +51,11 @@ uint8_t Sermem::putFile()
 
 	// begin the page write, starting with page 0
 	uint16_t page = 0;
-	ee_putByteStart(page++);
+	if (I2C_OK != ee_putByteStart(page++))
+	{
+		_uart->write(TRANSFER_NACK);
+		return TRANSFER_ERR;
+	}
 
 	// get data!
 	while (_transferSize)

@@ -19,6 +19,8 @@
 
 
 int main(void);
+void Effects_readCompleteHandler(uint8_t data);
+void Effects_startSampleCompleteHandler(uint8_t result);
 
 
 const static uint8_t SLEEPY_EYES[] PROGMEM = {
