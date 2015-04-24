@@ -49,8 +49,8 @@ void saveSettings(int baud, const char* port)
 	ofstream file(".upload-settings", ios::out);
 	if (!file.fail())
 	{
-		file << baud << "" << endl;
-		file << port << "" << endl;
+		file << baud << endl;
+		file << port << endl;
 		file.flush();
 		file.close();
 	}
