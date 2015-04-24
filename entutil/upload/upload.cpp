@@ -118,7 +118,7 @@ bool waitForAck(int fd)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Performs a blocking write on the serial port
-bool writeBytes(int fd, char* buffer, int bytesToWrite)
+void writeBytes(int fd, char* buffer, int bytesToWrite)
 {
 	while (bytesToWrite)
 	{
