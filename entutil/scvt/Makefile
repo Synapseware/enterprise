@@ -1,3 +1,8 @@
 
+TARGET = scvt
+
 all:
-	g++ waveparser.cpp scvt.cpp -o scvt
+	g++ waveparser.cpp $(TARGET).cpp -o $(TARGET)
+
+clean:
+	rm -f $(TARGET)
