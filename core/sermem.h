@@ -28,10 +28,10 @@ extern "C" {
 #define CMD_MODE				'M'
 
 
-#define TRANSFER_ACK			0xFF
-#define TRANSFER_NACK			0xDE
-#define TRANSFER_ERR			0x00
-#define TRANSFER_SUCCESS		0x01
+#define TRANSFER_ACK			'Y'
+#define TRANSFER_NACK			'N'
+#define TRANSFER_ERR			'!'
+#define TRANSFER_SUCCESS		'K'
 
 
 class Sermem
