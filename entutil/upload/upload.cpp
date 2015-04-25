@@ -2,12 +2,38 @@
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// save the state
+void savePortState(int fd)
+{
+	FILE * state = fopen(".upload-state", "w");
+	if (NULL != state)
+	{
+		fwrite((char*)&fd, 1, sizeof(int), state);
+		fclose(state);
+	}
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Attempts to close ay previously opened port
+void clearPortState(void)
+{
+	FILE * state = fopen(".upload-state", "r");
+	if (NULL == state)
+		return;
+
+	int fd = 0;
+	fread(&fd, sizeof(int), 1, state);
+	fclose(state);
+
+	close(fd);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 int open_port(const char* port)
 {
-	int fd; // file description for the serial port
-	
-	fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY);
-	
+	clearPortState();
+
+	int fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY);
 	if (fd == -1) // if open is unsucessful
 	{
 		cout << "open_port: Unable to open " << port << "." << endl;
@@ -17,6 +43,8 @@ int open_port(const char* port)
 	fcntl(fd, F_SETFL, 0);
 	cout << "port is open." << endl;
 
+	savePortState(fd);
+
 	return fd;
 }
 
@@ -24,6 +52,7 @@ int open_port(const char* port)
 int configure_port(int fd, int baud)
 {
 	struct termios port_settings;				// structure to store the port settings in
+	memset(&port_settings, 0, sizeof(termios));	// zero out the structure
 
 	cfsetispeed(&port_settings, baud); 			// set baud rates
 	cfsetospeed(&port_settings, baud);
@@ -31,11 +60,14 @@ int configure_port(int fd, int baud)
 	port_settings.c_cflag &= ~PARENB;			// set no parity, stop bits, data bits
 	port_settings.c_cflag &= ~CSTOPB;
 	port_settings.c_cflag &= ~CSIZE;
-	port_settings.c_cflag |= CS8;
+	port_settings.c_cflag |= CS8;				// 8 data bits
+	//port_settings.c_cflag |= CRTSCTS;			// hardware flow control
+	//port_settings.c_cflag |= CLOCAL;			// no modem
+	//port_settings.c_cflag |= CREAD;				// enable receiving
 
-//	port_settings.c_cc[VMIN]     = 1;			// block until at least 1 byte is ready
+	//port_settings.c_cc[VMIN]     = 1;			// block until at least 1 byte is ready
 
-	cfmakeraw(&port_settings);
+	//cfmakeraw(&port_settings);
 
 	tcflush(fd, TCIFLUSH);						// flush the port
 	tcsetattr(fd, TCSANOW, &port_settings);		// apply the settings to the port
@@ -88,20 +120,14 @@ bool loadSettings(int* baud, char** port)
 // Reads the specified number of bytes from the serial port
 bool readBytes(int fd, char* buffer, int bytesToRead)
 {
-	cout << "  Reading " << bytesToRead << " bytes" << endl;
 	while (bytesToRead)
 	{
 		int bytesRead = read(fd, buffer, bytesToRead);
 		if (bytesRead < 0)
-		{
-			cout << "read failed!" << endl;
 			return false;
-		}
 
-		cout << "     read " << bytesRead << " bytes" << endl;
 		bytesToRead -= bytesRead;
 	}
-	cout << "   Done reading" << endl;
 
 	return true;
 }
@@ -110,16 +136,20 @@ bool readBytes(int fd, char* buffer, int bytesToRead)
 // Waits for an ACK response from the Enterprise (an 'A' character)
 bool waitForAck(int fd)
 {
-	int data = 0;
-	readBytes(fd, (char*)&data, 1);
-	printf("  rsp code: %#x\n", data);
-	return 0xFF == data;
+	char data = 0;
+	readBytes(fd, &data, 1);
+	if ('Y' == data)
+		return true;
+
+	cout << " ack_fail: " << data << flush;
+	return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Performs a blocking write on the serial port
 void writeBytes(int fd, char* buffer, int bytesToWrite)
 {
+	/*
 	while (bytesToWrite)
 	{
 		int bytesWritten = write(fd, buffer, bytesToWrite);
@@ -129,6 +159,9 @@ void writeBytes(int fd, char* buffer, int bytesToWrite)
 		}
 		bytesToWrite -= bytesWritten;
 	}
+	*/
+	write(fd, buffer, bytesToWrite);
+	tcdrain(fd);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -142,9 +175,10 @@ bool processUpload(int fd, FILE* file)
 	fseek(file, 0, SEEK_SET);
 
 	// don't allow excessive transfers
-	if (fileSize > MAX_IMAGE_SIZE)
+	cout << "EEPROM image size is " << fileSize << " bytes." << endl;
+	if (fileSize > 262144)
 	{
-		cout << "EEPROM image size (" << fileSize << ") exceeds maximum storage capacity on the Enterprise (256kb)" << endl;
+		cout << "  FAIL: Exceeds maximum storage capacity on the Enterprise (256kb)" << endl;
 		return false;
 	}
 
@@ -161,53 +195,61 @@ bool processUpload(int fd, FILE* file)
 	//		Wait for ACK at the end of each page
 	// Client sends NACK when complete
 
+	cout << "Entering AUTO mode:" << flush;
 	buffer[0] = 'A';
 	writeBytes(fd, buffer, 1);
 	if (!waitForAck(fd))
 	{
-		cout << "Could not enter AUTO mode" << endl;
+		cout << "  FAIL!" << endl;
 		return false;
 	}
-	cout << "Entered AUTO mode" << endl;
+	cout << " OK" << endl;
 
 	// enter write mode
+	cout << "Entering WRITE mdoe:" << flush;
 	buffer[0] = 'W';
 	writeBytes(fd, buffer, 1);
 	if (!waitForAck(fd))
 	{
-		cout << "Could not enter WRITE mode" << endl;
+		cout << "  FAIL!" << endl;
 		return false;
 	}
-	cout << "Entered WRITE mode" << endl;
+	cout << " OK" << endl;
 
 	// let client know size of transfer
+	cout << "Sending filesize:" << flush;
 	writeBytes(fd, (char*)&fileSize, 4);
 	if (!waitForAck(fd))
 	{
-		cout << "File size (" << fileSize << ") declined" << endl;
+		cout << "  FAIL!" << endl;
 		return false;
 	}
+	cout << " OK" << endl;
+
+	readBytes(fd, buffer, 2);
+	uint16_t ps = *(uint16_t*)buffer;
+	cout << "Page size reported as: " << ps << " bytes." << endl;
 
 	// upload the file
+	cout << "Uploading" << flush;
 	char fileData[PAGE_SIZE];
 	int pageUploaded = 0;
 	while (fileSize > 0)
 	{
-		cout << "Byte remaining: " << fileSize << endl;
-		fread(fileData, sizeof(fileData), 1, file);
+		fread(fileData, PAGE_SIZE, 1, file);
 		writeBytes(fd, fileData, PAGE_SIZE);
 
 		if (!waitForAck(fd))
 		{
-			cout << "Block transfer failed!" << endl;
+			cout << " FAIL!  EEPROM write error." << endl;
 			break;
 		}
 
 		fileSize -= PAGE_SIZE;
-
 		pageUploaded++;
-		printf("Page uploaded: %d\n", pageUploaded);
+		cout << "." << flush;
 	}
+	cout << endl;
 
 	return fileSize == 0;
 }
@@ -231,6 +273,8 @@ void upload(int baud, const char* port, const char* filename)
 
 	close(fd);
 	fclose(file);
+
+	clearPortState();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -

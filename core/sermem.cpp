@@ -42,12 +42,16 @@ uint8_t Sermem::putFile()
 	_uart->receiveBuff((char*)&_transferSize, sizeof(uint32_t));
 	if (_transferSize > AT24C1024_MAX_DATA)
 	{
-		_uart->write(TRANSFER_NACK);
+		_uart->write('@');
 		return TRANSFER_ERR;
 	}
 
 	// Size is OK
 	_uart->write(TRANSFER_ACK);
+
+	// write page size
+	_uart->write(AT24C1024_PAGE_SIZE & 0xFF);
+	_uart->write(AT24C1024_PAGE_SIZE >> 8);
 
 	// begin the page write, starting with page 0
 	uint16_t page = 0;
@@ -261,12 +265,14 @@ void Sermem::process(char data)
 
 		// write new EEPROM data
 		case 'W':
+			serial_led_on();
 			_uart->write(TRANSFER_ACK);
 			putstr(PSTR("Waiting for file transfer.\r\n"));
 			if (putFile())
 				putstr(PSTR("File successfully transfered to EEPROM.\r\n"));
 			else
 				putstr(PSTR("File transfer timed out.  Please send file within 30 seconds.\r\n"));
+			serial_led_off();
 			break;
 
 		// format the EEPROM

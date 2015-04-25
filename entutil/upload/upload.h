@@ -23,7 +23,7 @@ static const char* ARG_SAVE = "-s";
 
 
 static const uint16_t	PAGE_SIZE			= 256;
-static const uint32_t	MAX_IMAGE_SIZE		= 262144;
+static const int	MAX_IMAGE_SIZE			= 262144;
 
 
 void showHelp(void);
