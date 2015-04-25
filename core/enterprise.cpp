@@ -132,9 +132,6 @@ static void init(void)
 	dbg_led_off();
 	serial_led_off();
 
-	// initialize USART
-	uart.init();
-
 	// setup the UART receive interrupt handler
 	uart.beginReceive(&receiveCallback);
 
@@ -235,31 +232,23 @@ ISR(SWITCH_PCVECT)
 // receive buffer interrupt vector
 ISR(USART_RX_vect)
 {
-	#ifdef serial_led_on
 	serial_led_on();
-	#endif
 
 	uint8_t data = UDR0;
 	uart.receiveHandler(data);
 
-	#ifdef serial_led_off
 	serial_led_off();
-	#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // transmit interrupt vector
 ISR(USART_TX_vect)
 {
-	#ifdef serial_led_on
 	serial_led_on();
-	#endif
 
 	uart.transmitHandler();
 
-	#ifdef serial_led_off
 	serial_led_off();
-	#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

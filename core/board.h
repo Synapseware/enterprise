@@ -36,9 +36,9 @@
 #define SERIAL_LED_DDR		DDRC
 #define SERIAL_LED_PIN		PORTC1
 
-#define serial_led_off()	LED_PLAY_PORT |= (1<<SERIAL_LED_PIN)
-#define serial_led_on()		LED_PLAY_PORT &= ~(1<<SERIAL_LED_PIN)
-#define serial_led_en()		LED_PLAY_DDR |= (1<<SERIAL_LED_PIN)
+#define serial_led_off()	SERIAL_LED_PORT |= (1<<SERIAL_LED_PIN)
+#define serial_led_on()		SERIAL_LED_PORT &= ~(1<<SERIAL_LED_PIN)
+#define serial_led_en()		SERIAL_LED_PORT |= (1<<SERIAL_LED_PIN)
 
 
 //----------------------------------------------------------------------------------------------
