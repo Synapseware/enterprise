@@ -46,7 +46,10 @@ static void processCommRequest(void)
 		return;
 
 	// don't process any more coms data
-	uart.endReceive();
+	uart.readAEnd();
+
+	// setup the UART receive interrupt handler
+	_dataReceived = 0;
 
 	// shutoff effects while processing request
 	effects.off();
@@ -54,16 +57,15 @@ static void processCommRequest(void)
 	switch (_rxData & 0x5F)
 	{
 		case 'V':
-			uart.putstrM(PSTR("\r\nVersion: 0.5\r\n"));
+			uart.putstr_P(PSTR("\r\nVersion: 0.5\r\n"));
 			break;
 		default:
+			// process the request
 			sermem.process(_rxData);
 			break;
 	}
 
-	// setup the UART receive interrupt handler
-	_dataReceived = 0;
-	uart.beginReceive(&receiveCallback);
+	uart.readA(&receiveCallback);
 	effects.on();
 }
 
@@ -130,9 +132,6 @@ static void init(void)
 	dbg_led_off();
 	serial_led_off();
 
-	// setup the UART receive interrupt handler
-	uart.beginReceive(&receiveCallback);
-
 	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	// establish event timer & handler
 	// timer1, event timer
@@ -173,9 +172,9 @@ void initEffects(void)
 	uint16_t samples = effects.init();
 	sprintf(message, "%d", samples);
 
-	uart.putstrM(PSTR("Found "));
+	uart.putstr_P(PSTR("Found "));
 	uart.putstr(message);
-	uart.putstrM(PSTR(" effects on EEPROM\r\n"));
+	uart.putstr_P(PSTR(" effects on EEPROM\r\n"));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -184,7 +183,7 @@ int main()
 {
 	init();
 
-	uart.putstrM(PSTR("Enterprise main board booting up...\r\n"));
+	uart.putstr_P(PSTR("Enterprise main board booting up.\r\n"));
 	sermem.showHelp();
 
 	initEffects();
@@ -192,7 +191,8 @@ int main()
 	effects.on();
 	effects.startSample(SFX_EFX_OPENING);
 
-	uart.putstrM(PSTR("Effects on.\r\n"));
+	// setup the UART receive interrupt handler
+	uart.readA(&receiveCallback);
 
 	while(1)
 	{
@@ -200,7 +200,7 @@ int main()
 		events.doEvents();
 
 		// process any communications data
-		processCommRequest();
+		//processCommRequest();
 	}
 }
 
@@ -232,7 +232,7 @@ ISR(USART_RX_vect)
 {
 	serial_led_on();
 
-	uint8_t data = UDR0;
+	char data = UDR0;
 	uart.receiveHandler(data);
 
 	serial_led_off();
