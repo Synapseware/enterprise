@@ -226,6 +226,40 @@ void Sermem::format(void)
 	putstr(PSTR("\r\n"));
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Writes the EEPROM block size value as a string to the user
+void Sermem::tellBlockSize(void)
+{
+	char buff[32];
+	memset(buff, 0, sizeof(buff));
+
+	putstr(PSTR("Block size:\r\n"));
+	sprintf_P(buff, PSTR("%d\r\n"), AT24C1024_PAGE_SIZE);
+	_uart->putstr(buff);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Asks the user to send the transfer size
+void Sermem::askTransferSize(void)
+{
+	char buff[16];
+	memset(buff, 0, sizeof(buff));
+
+	putstr(PSTR("Transfer size?\r\n"));
+
+	_uart->getstr(buff, sizeof(buff)-1);
+	if (!_autoMode)
+	{
+		putstr(PSTR("Recieved: "));
+		_uart->putstr(buff);
+		putstr(PSTR(".\r\n"));
+	}
+
+	_transferSize = atoi(buff);
+	_uart->write(TRANSFER_ACK);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Sermem::putstr(const char * pstr)
 {
@@ -244,6 +278,8 @@ void Sermem::showHelp(void)
   R: Retrieves the entire contents of the EEPROM\r\n\
   W: Stores a file on the EEPROM\r\n\
   F: Formats the EEPROM\r\n\
+  B: Read block size\r\n\
+  T: Set transfer size\r\n\
   H: Display help (this text)\r\n"));
 }
 
@@ -267,9 +303,7 @@ void Sermem::process(char data)
 
 		// retrieve EEPROM contents
 		case CMD_READ:
-			putstr(PSTR("Transfer starting...\r\n"));
 			getFile();
-			putstr(PSTR("Done!\r\n"));
 			break;
 
 		// write new EEPROM data
@@ -283,20 +317,16 @@ void Sermem::process(char data)
 
 		// format the EEPROM
 		case CMD_FORMAT:
-			putstr(PSTR("Formatting...\r\n"));
 			format();
-			putstr(PSTR("Done!\r\n"));
 			break;
 
 		// retrieve the block size
 		case CMD_BLOCK_SIZE:
-			putstr(PSTR("Block size:\r\n"));
 			tellBlockSize();
 			break;
 
 		// get the transfer size
 		case CMD_TRANSFER_SIZE:
-			putstr(PSTR("Transfer size:\r\n"));
 			askTransferSize();
 			break;
 		

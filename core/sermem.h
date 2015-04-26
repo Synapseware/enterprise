@@ -39,42 +39,17 @@ public:
 	Sermem(Uart* uart);
 
 	void showHelp(void);
-
-	uint8_t putFile(void);
-	uint8_t getFile(void);
-	void format(void);
-	void writeCannedData(void);
-	void putstr(const char * pstr);
 	void process(char data);
 	void getFileCallback(void);
 
 private:
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	// Writes the EEPROM block size value as a string to the user
-	void tellBlockSize(void)
-	{
-		char buff[32];
-		memset(buff, 0, sizeof(buff));
-
-		putstr(PSTR("Block size:\n"));
-		sprintf_P(buff, PSTR("%d\n"), AT24C1024_PAGE_SIZE);
-		_uart->putstr(buff);
-	}
-
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	// Asks the user to send the transfer size
-	void askTransferSize(void)
-	{
-		char buff[16];
-		memset(buff, 0, sizeof(buff));
-
-		putstr(PSTR("Transfer size?\n"));
-
-		_uart->read(buff, sizeof(buff)-1);
-
-		_transferSize = atoi(buff);
-		_uart->write(TRANSFER_ACK);
-	}
+	uint8_t putFile(void);
+	uint8_t getFile(void);
+	void format(void);
+	void tellBlockSize(void);
+	void askTransferSize(void);
+	void writeCannedData(void);
+	void putstr(const char * pstr);
 
 	Uart*		_uart;
 	uint8_t		_transferPageComplete;
