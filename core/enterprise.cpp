@@ -1,10 +1,10 @@
 #include "enterprise.h"
 
 // declare enterprise globals
-static	Uart				uart;
-static	Events				events(MAX_EVENT_RECORDS);
-static	Sermem				sermem(&uart);
-static	SoundEffects		effects(&events);
+Uart				uart;
+Events				events(MAX_EVENT_RECORDS);
+Sermem				sermem(&uart);
+SoundEffects		effects(&events);
 
 
 volatile uint8_t _idx = 0;
@@ -138,7 +138,7 @@ void initEffects(void)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Initialize the hardware
-static void init(void)
+void init(void)
 {
 	play_led_en();
 	dbg_led_en();
@@ -193,10 +193,8 @@ int main()
 	effects.on();
 	effects.startSample(SFX_EFX_OPENING);
 
-	//while(1);
-
 	// setup the UART receive interrupt handler
-	//uart.readA(&receiveCallback);
+	uart.readA(&receiveCallback);
 
 	while(1)
 	{
@@ -204,7 +202,7 @@ int main()
 		events.doEvents();
 
 		// process any communications data
-		//processCommRequest();
+		processCommRequest();
 	}
 }
 
