@@ -200,7 +200,7 @@ void Sermem::format(void)
 {
 	_uart->write('A');
 	putstr(PSTR("Are you sure want to format?  This will erase all EEPROM data.\r\n"));
-	if (_uart->read() & 0x5F == 'Y')
+	if ((_uart->read() & 0x5F) == 'Y')
 		_uart->write('A');
 	else
 	{
@@ -238,12 +238,12 @@ void Sermem::putstr(const char * pstr)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Sermem::showHelp(void)
 {
-	putstr(PSTR("Sound Effects EEPROM Commands:\n\
-  A: Auto-mode for scripted interfacing\n\
-  M: Manual-mode for non-scripted interfacing\n\
-  R: Retrieves the entire contents of the EEPROM\n\
-  W: Stores a file on the EEPROM\n\
-  F: Formats the EEPROM\n\
+	putstr(PSTR("Sound Effects EEPROM Commands:\r\n\
+  A: Auto-mode for scripted interfacing\r\n\
+  M: Manual-mode for non-scripted interfacing\r\n\
+  R: Retrieves the entire contents of the EEPROM\r\n\
+  W: Stores a file on the EEPROM\r\n\
+  F: Formats the EEPROM\r\n\
   H: Display help (this text)\r\n"));
 }
 
@@ -288,11 +288,13 @@ void Sermem::process(char data)
 			putstr(PSTR("Done!\r\n"));
 			break;
 
+		// retrieve the block size
 		case CMD_BLOCK_SIZE:
 			putstr(PSTR("Block size:\r\n"));
 			tellBlockSize();
 			break;
 
+		// get the transfer size
 		case CMD_TRANSFER_SIZE:
 			putstr(PSTR("Transfer size:\r\n"));
 			askTransferSize();

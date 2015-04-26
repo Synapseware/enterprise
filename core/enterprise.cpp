@@ -122,6 +122,22 @@ static void checkButton(eventState_t state)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Initialize the Effects system
+void initEffects(void)
+{
+	char message[10];
+
+	// initialize effects
+	uint16_t samples = effects.init();
+	sprintf(message, "%d", samples);
+
+	uart.putstr_P(PSTR("Found "));
+	uart.putstr(message);
+	uart.putstr_P(PSTR(" effects on EEPROM\r\n"));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Initialize the hardware
 static void init(void)
 {
 	play_led_en();
@@ -164,20 +180,6 @@ static void init(void)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void initEffects(void)
-{
-	char message[10];
-
-	// initialize effects
-	uint16_t samples = effects.init();
-	sprintf(message, "%d", samples);
-
-	uart.putstr_P(PSTR("Found "));
-	uart.putstr(message);
-	uart.putstr_P(PSTR(" effects on EEPROM\r\n"));
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // main program loop
 int main()
 {
@@ -191,8 +193,10 @@ int main()
 	effects.on();
 	effects.startSample(SFX_EFX_OPENING);
 
+	//while(1);
+
 	// setup the UART receive interrupt handler
-	uart.readA(&receiveCallback);
+	//uart.readA(&receiveCallback);
 
 	while(1)
 	{
@@ -253,11 +257,13 @@ ISR(USART_TX_vect)
 // Callback handler for the read complete event
 void Effects_readCompleteHandler(uint8_t data)
 {
+	// pass the received data to the Effects core
 	effects.readComplete(data);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Effects_startSampleCompleteHandler(uint8_t result)
 {
+	// Signal the result of the start sample request
 	effects.startSampleComplete(result);
 }
