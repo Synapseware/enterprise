@@ -5,6 +5,7 @@
 extern "C" {
 #include <types.h>
 #include <stdio.h>
+#include <string.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
@@ -18,19 +19,17 @@ extern "C" {
 #include "board.h"
 
 
-#define CMD_ACK					'A'
-#define CMD_COMPLETE			'C'
-#define CMD_ERROR				'E'
-#define CMD_ABORT				'Q'
-#define CMD_HELLO				'H'
+#define CMD_MODE_AUTO			'A'
+#define CMD_MODE_MANUAL			'M'
 #define CMD_BLOCK_SIZE			'B'
 #define CMD_TRANSFER_SIZE		'T'
-#define CMD_MODE				'M'
-
+#define CMD_READ				'R'
+#define CMD_WRITE				'W'
+#define CMD_FORMAT				'F'
 
 #define TRANSFER_ACK			'Y'
 #define TRANSFER_NACK			'N'
-#define TRANSFER_ERR			'!'
+#define TRANSFER_ERR			'E'
 #define TRANSFER_SUCCESS		'K'
 
 
@@ -50,6 +49,32 @@ public:
 	void getFileCallback(void);
 
 private:
+	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	// Writes the EEPROM block size value as a string to the user
+	void tellBlockSize(void)
+	{
+		char buff[32];
+		memset(buff, 0, sizeof(buff));
+
+		putstr(PSTR("Block size:\n"));
+		sprintf_P(buff, PSTR("%d\n"), AT24C1024_PAGE_SIZE);
+		_uart->putstr(buff);
+	}
+
+	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	// Asks the user to send the transfer size
+	void askTransferSize(void)
+	{
+		char buff[16];
+		memset(buff, 0, sizeof(buff));
+
+		putstr(PSTR("Transfer size?\n"));
+
+		_uart->read(buff, sizeof(buff)-1);
+
+		_transferSize = atoi(buff);
+		_uart->write(TRANSFER_ACK);
+	}
 
 	Uart*		_uart;
 	uint8_t		_transferPageComplete;

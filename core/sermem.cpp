@@ -34,32 +34,28 @@ Sermem::Sermem(Uart* uart)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Receives a file from a serial transfer and stores it in the EEPROM
-uint8_t Sermem::putFile()
+uint8_t Sermem::putFile(void)
 {
 	uint16_t bytesTransfered = 0;
 
-	// Host will now give us 4 bytes, indicating the size of the transfer.
-	_uart->receiveBuff((char*)&_transferSize, sizeof(uint32_t));
-	if (_transferSize > AT24C1024_MAX_DATA)
+	if (0 == _transferSize || _transferSize > AT24C1024_MAX_DATA)
 	{
-		_uart->write('@');
+		putstr(PSTR("Invalid transfer size\r\n"));
+		_uart->write(TRANSFER_ERR);
 		return TRANSFER_ERR;
 	}
-
-	// Size is OK
-	_uart->write(TRANSFER_ACK);
-
-	// write page size
-	_uart->write(AT24C1024_PAGE_SIZE & 0xFF);
-	_uart->write(AT24C1024_PAGE_SIZE >> 8);
 
 	// begin the page write, starting with page 0
 	uint16_t page = 0;
 	if (I2C_OK != ee_putByteStart(page++))
 	{
-		_uart->write(TRANSFER_NACK);
+		putstr(PSTR("Failed to start EEPROM write sequence\r\n"));
+		_uart->write(TRANSFER_ERR);
 		return TRANSFER_ERR;
 	}
+
+	// we're OK so far, send our initial ACK
+	_uart->write(TRANSFER_ACK);
 
 	// get data!
 	while (_transferSize)
@@ -98,6 +94,7 @@ uint8_t Sermem::putFile()
 	}
 
 	// nack the end of the transfer
+	putstr(PSTR("Transfer complete\r\n"));
 	_uart->write(TRANSFER_NACK);
 
 	// return success
@@ -121,7 +118,7 @@ void Sermem::getFileCallback(void)
 		_transferPageComplete = 1;
 
 		// disable the async transmit
-		_uart->endTransmit();
+		_uart->writeAEnd();
 	}
 	else
 	{
@@ -144,7 +141,7 @@ uint8_t Sermem::getFile(void)
 	// Step 2:
 	// Get block size for transfer from client
 	uint8_t transferSizeMultiple = 0;
-	_uart->receiveBuff((char*)&transferSizeMultiple, sizeof(uint8_t));
+	_uart->read((char*)&transferSizeMultiple, sizeof(uint8_t));
 	if (0 == transferSizeMultiple)
 		return TRANSFER_ERR;
 	_transferSize = transferSizeMultiple * 8;
@@ -152,7 +149,7 @@ uint8_t Sermem::getFile(void)
 	// Step 3:
 	// Let client know how large of a transfer this will be
 	uint32_t totalTransferSize = AT24C1024_MAX_DATA;
-	_uart->sendBuff((char*)&totalTransferSize, sizeof(uint32_t));
+	_uart->write((char*)&totalTransferSize, sizeof(uint32_t));
 
 	// Step 4:
 	// Make sure client ACK'd our size
@@ -188,7 +185,7 @@ uint8_t Sermem::getFile(void)
 	}
 
 	// make sure async mode is disabled
-	_uart->endTransmit();
+	_uart->writeAEnd();
 
 	// send final NACK
 	_uart->write(TRANSFER_NACK);
@@ -201,6 +198,17 @@ uint8_t Sermem::getFile(void)
 // formats the chip by writing 0xff to all cells
 void Sermem::format(void)
 {
+	_uart->write('A');
+	putstr(PSTR("Are you sure want to format?  This will erase all EEPROM data.\r\n"));
+	if (_uart->read() & 0x5F == 'Y')
+		_uart->write('A');
+	else
+	{
+		putstr(PSTR("Format aborted.\r\n"));
+		_uart->write('N');
+		return;
+	}
+
 	uint16_t length = 0;
 	uint16_t page = 0;
 	while (page < AT24C1024_PAGE_COUNT)
@@ -223,18 +231,19 @@ void Sermem::putstr(const char * pstr)
 {
 	if (_autoMode)
 		return;
-	_uart->putstrM(pstr);
+
+	_uart->putstr_P(pstr);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Sermem::showHelp(void)
 {
-	putstr(PSTR("Sound Effects EEPROM Commands:\r\n\
-  A: Auto-mode for scripted interfacing\r\n\
-  M: Manual-mode for non-scripted interfacing\r\n\
-  R: Retrieves the entire contents of the EEPROM\r\n\
-  W: Stores a file on the EEPROM\r\n\
-  F: Formats the EEPROM\r\n\
+	putstr(PSTR("Sound Effects EEPROM Commands:\n\
+  A: Auto-mode for scripted interfacing\n\
+  M: Manual-mode for non-scripted interfacing\n\
+  R: Retrieves the entire contents of the EEPROM\n\
+  W: Stores a file on the EEPROM\n\
+  F: Formats the EEPROM\n\
   H: Display help (this text)\r\n"));
 }
 
@@ -245,45 +254,52 @@ void Sermem::process(char data)
 	switch (data & 0x5F) // mask all characters to upper-case ASCII :)
 	{
 		// auto-mode
-		case 'A':
+		case CMD_MODE_AUTO:
 			_uart->write(TRANSFER_ACK);
 			_autoMode = 1;
 			break;
 
 		// manual mode
-		case 'M':
+		case CMD_MODE_MANUAL:
 			_autoMode = 0;
 			putstr(PSTR("Manual mode now selected.\r\n"));
 			break;
 
 		// retrieve EEPROM contents
-		case 'R':
+		case CMD_READ:
 			putstr(PSTR("Transfer starting...\r\n"));
 			getFile();
 			putstr(PSTR("Done!\r\n"));
 			break;
 
 		// write new EEPROM data
-		case 'W':
-			serial_led_on();
-			_uart->write(TRANSFER_ACK);
+		case CMD_WRITE:
 			putstr(PSTR("Waiting for file transfer.\r\n"));
 			if (putFile())
 				putstr(PSTR("File successfully transfered to EEPROM.\r\n"));
 			else
 				putstr(PSTR("File transfer timed out.  Please send file within 30 seconds.\r\n"));
-			serial_led_off();
 			break;
 
 		// format the EEPROM
-		case 'F':
+		case CMD_FORMAT:
 			putstr(PSTR("Formatting...\r\n"));
 			format();
 			putstr(PSTR("Done!\r\n"));
 			break;
+
+		case CMD_BLOCK_SIZE:
+			putstr(PSTR("Block size:\r\n"));
+			tellBlockSize();
+			break;
+
+		case CMD_TRANSFER_SIZE:
+			putstr(PSTR("Transfer size:\r\n"));
+			askTransferSize();
+			break;
 		
 		// show the help text
-		case 'H':
+		default:
 			showHelp();
 			break;
 	}
