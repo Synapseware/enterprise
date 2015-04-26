@@ -146,9 +146,6 @@ private:
 	{
 		// load the header into the header struct
 		ee_readBytes(0, sizeof(SOUND_HEADER), (uint8_t*) &_header);
-
-		if (_header.samples > 0)
-			serial_led_on();
 	}
 };
 
