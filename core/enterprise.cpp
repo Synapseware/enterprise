@@ -34,10 +34,8 @@ volatile char _rxData = 0;
 volatile char _dataReceived = 0;
 static void receiveCallback(char data)
 {
-	play_led_on();
 	_rxData = data;
 	_dataReceived = 0xff;
-	play_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

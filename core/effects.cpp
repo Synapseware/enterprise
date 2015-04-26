@@ -5,7 +5,7 @@
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // This callback is used to dump the next value into the PWM stream
-void sampleCallbackHandler(eventState_t state)
+static void sampleCallbackHandler(eventState_t state)
 {
 	if (0 == state)
 		return;
@@ -13,7 +13,7 @@ void sampleCallbackHandler(eventState_t state)
 	SoundEffects * effects = (SoundEffects*)state;
 	effects->sampleCallback();
 }
-void playAmbientHandler(eventState_t state)
+static void playAmbientHandler(eventState_t state)
 {
 	if (0 == state)
 		return;
@@ -21,7 +21,7 @@ void playAmbientHandler(eventState_t state)
 	SoundEffects * effects = (SoundEffects*)state;
 	effects->playAmbient();
 }
-void playSequenceHandler(eventState_t state)
+static void playSequenceHandler(eventState_t state)
 {
 	if (0 == state)
 		return;
@@ -29,7 +29,7 @@ void playSequenceHandler(eventState_t state)
 	SoundEffects * effects = (SoundEffects*)state;
 	effects->playSequence();
 }
-void playBackgroundHandler(eventState_t state)
+static void playBackgroundHandler(eventState_t state)
 {
 	if (0 == state)
 		return;
@@ -82,7 +82,6 @@ void SoundEffects::sampleCallback(void)
 		else
 		{
 			_playState = SAMPLE_NONE;
-			play_led_off();
 		}
 
 		OCR2B = ((uint16_t)_sample + (uint16_t)_ambient) >> 1;
@@ -94,6 +93,7 @@ void SoundEffects::sampleCallback(void)
 		// read the next sample value as long as we have data to read
 		ee_readA(&Effects_readCompleteHandler);
 	}
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -115,7 +115,7 @@ void SoundEffects::startSampleComplete(uint8_t result)
 	if (0 == result)
 	{
 		_playState = SAMPLE_PLAYING;
-		play_led_on();
+		//play_led_on();
 	}
 	else
 		_playState = SAMPLE_NONE;
@@ -127,6 +127,7 @@ void SoundEffects::on(void)
 {
 	_onoff = SFX_ON;
 	ampPwr_on();
+	play_led_on();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -135,6 +136,7 @@ void SoundEffects::off(void)
 {
 	_onoff = SFX_OFF;
 	ampPwr_off();
+	play_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
