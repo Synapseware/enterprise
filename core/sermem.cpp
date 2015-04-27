@@ -34,8 +34,6 @@ Sermem::Sermem(Uart* uart)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Receives a file from a serial transfer and stores it in the EEPROM
-// Putfile supports the YMODEM protocol
-//		
 uint8_t Sermem::putFile(void)
 {
 	uint16_t bytesTransfered = 0;
