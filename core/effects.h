@@ -8,7 +8,10 @@
 #include "board.h"
 #include <events/events.h>
 #include <uart/uart.h>
+
+extern "C" {
 #include <drivers/at24c/at24c.h>
+}
 
 #include "enterprise.h"
 
@@ -21,93 +24,131 @@ static const uint8_t	SAMPLE_NONE			= 0x00;
 static const uint8_t	SFX_OFF				= 0x00;
 static const uint8_t	SFX_ON				= 0xFF;
 
+static const uint16_t   effectsStart		= 0x00;	 // start address of effects records in EEPROM
+
+static const uint8_t	RT_NULL				= 0xFF;	 // null record
+static const uint8_t	RT_SOUND			= 0x01;	 // sound effects
+static const uint8_t	RT_LIGHT			= 0x02;	 // lighting effects
+static const uint8_t	RT_MOTION			= 0x04;	 // motion effects
+static const uint8_t	RT_FIXED			= 0x08;	 // fixed schedule (not set implies a random scheduling)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// Header structure...
-//	0	0x02	2		Signature
-//	1
-//	2	0x04	2		Start Page
-//	3
-//	4	0x06	2		Total Pages
-//	5
-//	6	0x08	1		Bytes Used In Last Page
-//	7			1		Reserved
-//	8	0x0A	2		Sample Rate
-//	9
-//	A	start of next entry...
-
-// SOUND_EFFECT reflects an individual entry in the header record
-typedef struct
+class SoundEffects
 {
-	uint16_t		startPage;				// + 2		2
-	uint32_t		length;					// + 4		4
-} volatile SOUND_EFFECT;					// 6 bytes
+public:
 
-// SOUND_HEADER reflects the actual header record
-typedef struct
-{
-	uint16_t			samples;			// + 0	// # of samples (0-255)
-	SOUND_EFFECT	effects[42];			// + 2	// array of sound effects
-} volatile SOUND_HEADER;					// 2 + 42 * 6 bytes = 254 bytes
+	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+	// Header structure...
+	//	0	0x02	2		Signature
+	//	1
+	//	2	0x04	2		Start Page
+	//	3
+	//	4	0x06	2		Total Pages
+	//	5
+	//	6	0x08	1		Bytes Used In Last Page
+	//	7			1		Reserved
+	//	8	0x0A	2		Sample Rate
+	//	9
+	//	A	start of next entry...
+
+	// SOUND_EFFECT reflects an individual entry in the header record
+	typedef struct
+	{
+		uint16_t		startPage;				// + 2		2
+		uint32_t		length;					// + 4		4
+	} volatile SOUND_EFFECT;					// 6 bytes
+
+	// SOUND_HEADER reflects the actual header record
+	typedef struct
+	{
+		uint16_t          samples;              // + 0	// # of samples (0-255)
+		SOUND_EFFECT      effects[42];          // + 2	// array of sound effects
+	} volatile SOUND_HEADER;                    // 2 + 42 * 6 bytes = 254 bytes
+
+	/*
+	Event entry will contain:
+		- the sample to play (by index)
+		- the delay to the next sample
+		- the next sample (by index)
+	*/
+
+	/*
+	Dynamic events require a few things...
+	- a playback function
+		are we playing back a random event?
+		a fixed event?
+		a sound event?
+		a lighting event?
+		a motion event?
+	- an event schedule (done, events.c)
+	- storage (done, EEPROM)
+	- generic playback event
+
+	Event header "records" will require:
+		- record type (sound, light, motion)
+		- callback interval
+		- number of samples in the effects record
+
+	Event entry will contain:
+		- the sample to play (by index)
+		- the delay to the next sample
+		- the next sample (by index)
+	*/
+
+	#ifdef __AVR_ATmega328P__
+		#define		EEPROM_SIZE		1024
+	#endif
+
+	/*
+	typedef struct
+	{
+		uint8_t		RecordType;
+		uint8_t		Count;
+		uint16_t	Delay;
+	} EVENT_HEADER;
+
+	typedef struct 
+	{
+		uint8_t		ItemIndex;
+	} EVENT_ENTRY;
+	*/
+
+	SoundEffects(Events* events);
+	uint16_t init(void);
+	void on(void);
+	void off(void);
+	uint8_t playing(void);
+	void startSample(uint8_t index);
+	void playAmbient(void);
+	void playBackground(void);
+	void playSequence(void);
+
+	void startSampleComplete(uint8_t result);
+	void sampleCallback(void);
+	void readComplete(uint8_t sfxdata);
+
+private:
+	Events *       _events;
+	SOUND_HEADER   _header;
+	uint8_t        _sample;
+	uint8_t	       _ambient;
+	uint32_t       _length;
+	uint8_t        _playState;
+	uint16_t       _ambientPos;
+	uint8_t        _ambientDelay;
+	uint8_t        _onoff;
 
 
-/*
-Dynamic events require a few things...
-- a playback function
-	are we playing back a random event?
-	a fixed event?
-	a sound event?
-	a lighting event?
-	a motion event?
-- an event schedule (done, events.c)
-- storage (done, EEPROM)
-- generic playback event
+	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+	// Fills the header object with data
+	void fillHeader(void)
+	{
+		// load the header into the header struct
+		ee_readBytes(0, sizeof(SOUND_HEADER), (uint8_t*) &_header);
+	}
+};
 
-Event header "records" will require:
-	- record type (sound, light, motion)
-	- callback interval
-	- number of samples in the effects record
-
-Event entry will contain:
-	- the sample to play (by index)
-	- the delay to the next sample
-	- the next sample (by index)
-*/
-
-#ifdef __AVR_ATmega328P__
-	#define		EEPROM_SIZE		1024
-#endif
-
-static const uint16_t	effectsStart	= 0x00;		// start address of effects records in EEPROM
-
-static const uint8_t	RT_NULL			= 0xFF;		// null record
-static const uint8_t	RT_SOUND		= 0x01;		// sound effects
-static const uint8_t	RT_LIGHT		= 0x02;		// lighting effects
-static const uint8_t	RT_MOTION		= 0x04;		// motion effects
-static const uint8_t	RT_FIXED		= 0x08;		// fixed schedule (not set implies a random scheduling)
-
-typedef struct
-{
-	uint8_t		RecordType;
-	uint8_t		Count;
-	uint16_t	Delay;
-} EVENT_HEADER;
-
-typedef struct 
-{
-	uint8_t		ItemIndex;
-} EVENT_ENTRY;
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-void sfx_init(void);
-void sfx_on(void);
-void sfx_off(void);
-uint8_t sfx_playing(void);
-void sfx_startSample(uint8_t index);
-void sfx_playAmbient(eventState_t state);
-void sfx_playSequence(eventState_t state);
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -

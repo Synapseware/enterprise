@@ -1,3 +1,9 @@
+#Enterprise tools ignores
+upload
+hdrinfo
+stitch
+scvt
+
 #Basic ignores
 default/
 .dep/
