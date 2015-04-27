@@ -1,19 +1,25 @@
 #include "enterprise.h"
 
+// declare enterprise globals
+Uart				uart;
+Events				events(MAX_EVENT_RECORDS);
+Sermem				sermem(&uart);
+SoundEffects		effects(&events);
+
 
 volatile uint8_t _idx = 0;
 volatile uint8_t _val = 0;
-void fadeStatusLed(eventState_t state)
+static void fadeStatusLed(eventState_t state)
 {
 	if (_idx == 0)
 		dbg_led_on();
-	if (_idx >= _val)
+	else if (_idx >= _val)
 		dbg_led_off();
 	_idx += 4;
 }
 
 volatile uint8_t _i = 0;
-void readNextStatusVal(eventState_t state)
+static void readNextStatusVal(eventState_t state)
 {
 	_val = pgm_read_byte(&SLEEPY_EYES[_i++]);
 	if (_i >= SLEEPY_EYES_LEN)
@@ -26,7 +32,7 @@ void readNextStatusVal(eventState_t state)
 //	gets called by the UART/USART when a byte of data has been received
 volatile char _rxData = 0;
 volatile char _dataReceived = 0;
-void receiveCallback(char data)
+static void receiveCallback(char data)
 {
 	_rxData = data;
 	_dataReceived = 0xff;
@@ -34,41 +40,47 @@ void receiveCallback(char data)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // processes a communications request from the serial port
-void processCommRequest()
+static void processCommRequest(void)
 {
 	if (!_dataReceived)
 		return;
 
-	uartEndReceive();
+	// don't process any more coms data
+	uart.readAEnd();
 
-	sfx_off();
-
+	// setup the UART receive interrupt handler
 	_dataReceived = 0;
-	spie_process(_rxData);
+
+	// shutoff effects while processing request
+	effects.off();
+
 	switch (_rxData & 0x5F)
 	{
 		case 'V':
-			uart_putstrM(PSTR("\r\nVersion: 0.5\r\n"));
+			uart.putstr_P(PSTR("\r\nVersion: 0.5\r\n"));
+			break;
+		default:
+			// process the request
+			sermem.process(_rxData);
 			break;
 	}
 
-	sfx_on();
-
-	// setup the UART receive interrupt handler
-	uartBeginReceive(&receiveCallback);
+	uart.readA(&receiveCallback);
+	effects.on();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // enables the button after a timeout
 volatile uint8_t _wakingUp = 0;
-void enableButton(eventState_t state)
+static void enableButton(eventState_t state)
 {
+
 	_wakingUp = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // checks the state of the button
-void checkButton(eventState_t state)
+static void checkButton(eventState_t state)
 {
 	// ignore any button presses after waking up
 	if (_wakingUp)
@@ -85,7 +97,7 @@ void checkButton(eventState_t state)
 	//TODO: Button debounce
 
 	// shutdown the CPU and all effects
-	sfx_off();
+	effects.off();
 
 	// shutoff the LEDs
 	dbg_led_off();
@@ -103,32 +115,38 @@ void checkButton(eventState_t state)
 	sleep_cpu();
 
 	//
-	registerOneShot(enableButton, 8000, EVENT_STATE_NONE);
+	events.registerOneShot(enableButton, 8000, EVENT_STATE_NONE);
 
 	// wake back up
-	sfx_on();
+	effects.on();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Initialize the Effects system
+void initEffects(void)
+{
+	char message[10];
+
+	// initialize effects
+	uint16_t samples = effects.init();
+	sprintf(message, "%d", samples);
+
+	uart.putstr_P(PSTR("Found "));
+	uart.putstr(message);
+	uart.putstr_P(PSTR(" effects on EEPROM\r\n"));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Initialize the hardware
 void init(void)
 {
 	play_led_en();
-	play_led_off();
-
 	dbg_led_en();
-	dbg_led_on();
+	serial_led_en();
 
-	// initialize effects
-	sfx_init();
-
-	// initialize SPI EEPROM support
-	spie_init();
-
-	// initialize USART
-	uart_init();
-
-	// setup the UART receive interrupt handler
-	uartBeginReceive(&receiveCallback);
+	play_led_off();
+	dbg_led_off();
+	serial_led_off();
 
 	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	// establish event timer & handler
@@ -142,7 +160,7 @@ void init(void)
 				(1<<CS10);
 	TIMSK1	=	(1<<OCIE1A);
 
-	setTimeBase(SAMPLE_RATE);
+	events.setTimeBase(SAMPLE_RATE);
 
 	// setup sleep mode
 	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
@@ -154,9 +172,8 @@ void init(void)
 	SWITCH_PCMSK	|= (1<<SWITCH_PCINT);
 	PCICR			|= (1<<SWITCH_PCICR);
 
-
-	registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
-	registerEvent(readNextStatusVal, 500, EVENT_STATE_NONE);
+	events.registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
+	events.registerEvent(readNextStatusVal, 750, EVENT_STATE_NONE);
 
 	// enable all interrupts
 	sei();
@@ -168,18 +185,21 @@ int main()
 {
 	init();
 
-	uart_putstrAM(PSTR("Enterprise main board booting up...\r\n"), 0);
+	uart.putstr_P(PSTR("Enterprise main board booting up.\r\n"));
+	sermem.showHelp();
 
-	spie_showHelp();
+	initEffects();
 
-	sfx_on();
+	effects.on();
+	effects.startSample(SFX_EFX_OPENING);
 
-	sfx_startSample(SFX_EFX_OPENING);
+	// setup the UART receive interrupt handler
+	uart.readA(&receiveCallback);
 
 	while(1)
 	{
 		// process any pending events
-		eventsDoEvents();
+		events.doEvents();
 
 		// process any communications data
 		processCommRequest();
@@ -191,7 +211,7 @@ int main()
 ISR(TIMER1_COMPA_vect)
 {
 	// trigger event cycle
-	eventSync();
+	events.sync();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -205,5 +225,43 @@ ISR(SWITCH_PCVECT)
 	SWITCH_PCMSK &= ~(1<<SWITCH_PCINT);
 
 	// require user to press button for at least 1/8 second
-	registerOneShot(checkButton, 1000, EVENT_STATE_NONE);
+	events.registerOneShot(checkButton, 1000, EVENT_STATE_NONE);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// receive buffer interrupt vector
+ISR(USART_RX_vect)
+{
+	serial_led_on();
+
+	char data = UDR0;
+	uart.receiveHandler(data);
+
+	serial_led_off();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// transmit interrupt vector
+ISR(USART_TX_vect)
+{
+	serial_led_on();
+
+	uart.transmitHandler();
+
+	serial_led_off();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Callback handler for the read complete event
+void Effects_readCompleteHandler(uint8_t data)
+{
+	// pass the received data to the Effects core
+	effects.readComplete(data);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Effects_startSampleCompleteHandler(uint8_t result)
+{
+	// Signal the result of the start sample request
+	effects.startSampleComplete(result);
 }

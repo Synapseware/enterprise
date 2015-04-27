@@ -11,13 +11,6 @@
 
 
 //----------------------------------------------------------------------------------------------
-// TWI constants
-#define twi_led_DDR			DDRC
-#define twi_led_PORT		PORTC
-#define twi_led_PIN			PORTC0
-
-
-//----------------------------------------------------------------------------------------------
 // Buttons
 #define SWITCH_DDR			DDRD
 #define SWITCH_PIN			PORTD6
@@ -31,18 +24,22 @@
 
 
 //----------------------------------------------------------------------------------------------
-// Serial LED
+// LED1 - TWI constants and LED
+
+
+//----------------------------------------------------------------------------------------------
+// LED2 - Serial LED
 #define SERIAL_LED_PORT		PORTC
 #define SERIAL_LED_DDR		DDRC
 #define SERIAL_LED_PIN		PORTC1
 
-#define serial_led_off()	LED_PLAY_PORT |= (1<<SERIAL_LED_PIN)
-#define serial_led_on()		LED_PLAY_PORT &= ~(1<<SERIAL_LED_PIN)
-#define serial_led_en()		LED_PLAY_DDR |= (1<<SERIAL_LED_PIN)
+#define serial_led_off()	SERIAL_LED_PORT |= (1<<SERIAL_LED_PIN)
+#define serial_led_on()		SERIAL_LED_PORT &= ~(1<<SERIAL_LED_PIN)
+#define serial_led_en()		SERIAL_LED_PORT |= (1<<SERIAL_LED_PIN)
 
 
 //----------------------------------------------------------------------------------------------
-// Play LED
+// LED3 - Play LED
 #define LED_PLAY_PORT		PORTC
 #define LED_PLAY_DDR		DDRC
 #define LED_PLAY_PIN		PORTC2
@@ -53,7 +50,7 @@
 
 
 //----------------------------------------------------------------------------------------------
-// Debug LED
+// LED4 - Debug LED
 #define LED_DBG_PORT		PORTC
 #define LED_DBG_DDR			DDRC
 #define LED_DBG_LINE		PORTC3
