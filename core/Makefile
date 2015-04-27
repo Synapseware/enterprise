@@ -86,6 +86,7 @@ SRC = $(LIBSDIR)/drivers/at24c/at24c.c			\
 CPPSRC = $(TARGET).cpp							\
 	effects.cpp							 		\
 	sermem.cpp									\
+	XModem.cpp									\
 	drivers/nacelle.cpp	 						\
 	$(LIBSDIR)/events/events.cpp				\
 	$(LIBSDIR)/uart/uart.cpp

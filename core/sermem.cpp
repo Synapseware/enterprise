@@ -34,6 +34,8 @@ Sermem::Sermem(Uart* uart)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Receives a file from a serial transfer and stores it in the EEPROM
+// Putfile supports the YMODEM protocol
+//		
 uint8_t Sermem::putFile(void)
 {
 	uint16_t bytesTransfered = 0;
@@ -247,15 +249,25 @@ void Sermem::askTransferSize(void)
 
 	putstr(PSTR("Transfer size?\r\n"));
 
-	_uart->getstr(buff, sizeof(buff)-1);
+	uint32_t transferSize = _transferSize;
+
+	if (_uart->getstr(buff, sizeof(buff)-1) != buff)
+		transferSize = (uint32_t) atoi(buff);
+
 	if (!_autoMode)
 	{
-		putstr(PSTR("Recieved: "));
+		memset(buff, 0, sizeof(buff));
+		sprintf_P(buff, PSTR("%d"), transferSize);
+
+		putstr(PSTR("Transfer size: "));
 		_uart->putstr(buff);
 		putstr(PSTR(".\r\n"));
 	}
 
-	_transferSize = atoi(buff);
+	// update the global value
+	if (transferSize > 0)
+		_transferSize = transferSize;
+
 	_uart->write(TRANSFER_ACK);
 }
 
