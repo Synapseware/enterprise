@@ -46,10 +46,9 @@ public:
 private:
 	uint8_t putFile(void);
 	uint8_t getFile(void);
-	void format(void);
+	uint8_t format(void);
 	void tellBlockSize(void);
 	void askTransferSize(void);
-	void writeCannedData(void);
 	void putstr(const char * pstr);
 
 	Uart*		_uart;
