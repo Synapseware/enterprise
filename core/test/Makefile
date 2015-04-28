@@ -63,7 +63,7 @@ FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = enterprise
+TARGET = test
 
 
 # Object files directory
@@ -73,21 +73,16 @@ OBJDIR = .
 
 
 # Shared source code
-LIBSDIR = ../libs
+LIBSDIR = ../../libs
 
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(LIBSDIR)/drivers/at24c/at24c.c			\
-	$(LIBSDIR)/twi/i2c.c						\
-	$(LIBSDIR)/spi/spi.c
+	$(LIBSDIR)/twi/i2c.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
 CPPSRC = $(TARGET).cpp							\
-	effects.cpp							 		\
-	sermem.cpp									\
-	XModem.cpp									\
-	drivers/nacelle.cpp	 						\
 	$(LIBSDIR)/events/events.cpp				\
 	$(LIBSDIR)/uart/uart.cpp
 
@@ -95,7 +90,7 @@ CPPSRC = $(TARGET).cpp							\
 # Enterprise definitions
 DEFS  = -DTWI_SPEED=400
 DEFS += -DBAUD=38400
-#DEFS += -DSAMPLE_RATE=8000 # defined in code
+DEFS += -DSAMPLE_RATE=8000 # defined in code
 DEFS += -DMAX_EVENT_RECORDS=24
 DEFS += -DSPI_CLK_4
 DEFS += -DBoard_Enterprise

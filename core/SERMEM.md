@@ -28,3 +28,17 @@ Here's the call sequence:
     (complete)
 
 The Enterprise responds with single byte response codes.  'A' is ACK, 'N' is NACK, 'E' is error.
+
+
+## Transfer Speeds
+These are observed transfer speeds using a logic analyzer.
+
+    Interface                   Rate                   Byte Transfer time
+    ------------------------    -------------------    --------------------
+    Serial/UART:                38.4K (BAUD)           ~ 234.5mS/byte
+    I2C                         400K                   21.5uS/byte
+
+    Math:
+    UART: 1/38400 * 9 = 234.5mS   (8N1)
+    I2C:  1/400000 * 9 = 22.5uS   (8 data + 1 for ack/nack)
+
