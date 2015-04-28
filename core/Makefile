@@ -50,7 +50,7 @@ MCU = atmega328p
 
 # Fuse values
 L_FUSE = 0xFF
-H_FUSE = 0xD7
+H_FUSE = 0xDF
 E_FUSE = 0xFF
 
 
@@ -86,24 +86,17 @@ SRC = $(LIBSDIR)/drivers/at24c/at24c.c			\
 CPPSRC = $(TARGET).cpp							\
 	effects.cpp							 		\
 	sermem.cpp									\
-	XModem.cpp									\
 	drivers/nacelle.cpp	 						\
 	$(LIBSDIR)/events/events.cpp				\
 	$(LIBSDIR)/uart/uart.cpp
 
 
-# Enterprise definitions
 DEFS  = -DTWI_SPEED=400
-DEFS += -DBAUD=9600
-#DEFS += -DUBRRN=21	#57600k
-DEFS += -DUBRRN=129 # 9600k
+DEFS += -DBAUD=57600
 #DEFS += -DSAMPLE_RATE=8000 # defined in code
 DEFS += -DMAX_EVENT_RECORDS=24
 DEFS += -DSPI_CLK_4
 DEFS += -DBoard_Enterprise
-DEFS +=	-DTWI_LED_DDR=DDRC
-DEFS +=	-DTWI_LED_PORT=PORTC
-DEFS += -DTWI_LED_PIN=PORTC0
 
 
 # List Assembler source files here.

@@ -7,6 +7,10 @@
 #include <fstream>
 #include <stdint.h>
 
+
+#include <waveparser.h>
+
+
 using namespace std;
 
 
