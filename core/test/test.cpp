@@ -90,7 +90,7 @@ const char* mapStatus(EE_STATUS status)
 //
 int main(void)
 {
-	char data[128], msg[128];
+	char data[256], msg[128];
 	char* result;
 	int address = 0;
 	int page = 0;
@@ -107,15 +107,20 @@ int main(void)
 		}
 
 		int length = result - data;
-		sprintf_P(msg, PSTR("Writing %d bytes to EEPROM\r\n", length));
+		sprintf_P(msg, PSTR("Writing %d bytes to EEPROM\r\n"), length);
 		uart.putstr(msg);
-
-		status = ee_writeBytes(page, length, data);
+n
+		status = ee_writePage(page, data);
 		if (I2C_OK == status)
-			uart.putstr_P(PSTR("Successfully wrote data to EEPROM\r\n"));
+		{
+			uart.putstr_P(PSTR("Successfully wrote data to EEPROM.  Polling write status...\r\n"));
+			ee_poll();
+			uart.putstr_P(PSTR("Done\r\"));
+		}
 		else
 		{
 			sprintf_P(msg, PSTR("Failed to write.  Error code = %d\r\n"), status);
+			uart.putstr(msg);
 		}
 	}
 
