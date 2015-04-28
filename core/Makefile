@@ -94,9 +94,7 @@ CPPSRC = $(TARGET).cpp							\
 
 # Enterprise definitions
 DEFS  = -DTWI_SPEED=400
-DEFS += -DBAUD=9600
-#DEFS += -DUBRRN=21	#57600k
-DEFS += -DUBRRN=129 # 9600k
+DEFS += -DBAUD=38400
 #DEFS += -DSAMPLE_RATE=8000 # defined in code
 DEFS += -DMAX_EVENT_RECORDS=24
 DEFS += -DSPI_CLK_4

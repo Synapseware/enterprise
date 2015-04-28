@@ -47,12 +47,18 @@ uint8_t Sermem::putFile(void)
 
 	// begin the page write, starting with page 0
 	uint16_t page = 0;
-	if (I2C_OK != ee_putByteStart(page++))
+	uint8_t result = ee_putByteStart(page++);
+	/*
+	if (I2C_OK != result)
 	{
+		char msg[32];
+		sprintf_P(msg, PSTR("Error: %d\r\n"), result);
+
 		putstr(PSTR("Failed to start EEPROM write sequence\r\n"));
-		_uart->write(TRANSFER_ERR);
+		_uart->putstr(msg);
 		return TRANSFER_ERR;
 	}
+	*/
 
 	// we're OK so far, send our initial ACK
 	_uart->write(TRANSFER_ACK);
@@ -196,7 +202,7 @@ uint8_t Sermem::getFile(void)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // formats the chip by writing 0xff to all cells
-void Sermem::format(void)
+uint8_t Sermem::format(void)
 {
 	_uart->write('A');
 	putstr(PSTR("Are you sure want to format?  This will erase all EEPROM data.\r\n"));
@@ -205,15 +211,18 @@ void Sermem::format(void)
 	else
 	{
 		putstr(PSTR("Format aborted.\r\n"));
-		_uart->write('N');
-		return;
+		return TRANSFER_NACK;
 	}
 
 	uint16_t length = 0;
 	uint16_t page = 0;
 	while (page < AT24C1024_PAGE_COUNT)
 	{
-		ee_setpage(page++);
+		if (I2C_OK != ee_setpage(page++))
+		{
+			putstr(PSTR("Format failed.  Could not set format page."));
+			return TRANSFER_ERR;
+		}
 
 		while (length++ < AT24C1024_PAGE_SIZE)
 			ee_putByte(0xFF);
@@ -221,9 +230,14 @@ void Sermem::format(void)
 
 		ee_putBytesEnd();
 
+		// poll the device for write-complete
+		ee_poll();
+
 		putstr(PSTR("."));
 	}
 	putstr(PSTR("\r\n"));
+
+	return TRANSFER_SUCCESS;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -242,24 +256,33 @@ void Sermem::tellBlockSize(void)
 // Asks the user to send the transfer size
 void Sermem::askTransferSize(void)
 {
-	char buff[16];
-	memset(buff, 0, sizeof(buff));
+	char buff[32];
+	memset(buff, 0, sizeof(buff)/sizeof(char));
 
 	putstr(PSTR("Transfer size?\r\n"));
 
 	uint32_t transferSize = _transferSize;
 
-	if (_uart->getstr(buff, sizeof(buff)-1) != buff)
-		transferSize = (uint32_t) atoi(buff);
+	char* result = _uart->getstr(buff, sizeof(buff)/sizeof(char)-1);
+	if (result != buff)
+	{
+		/*
+		char msg[48];
+		sprintf_P(msg, PSTR("Received %i bytes\r\n"), result - buff);
+		_uart->putstr(msg);
+		sprintf_P(msg, PSTR("Buffer is: \"%s\"\r\n"), buff);
+		_uart->putstr(msg);
+		sprintf_P(msg, PSTR("Value is: %lu and %d\r\n"), atol(buff), atol(buff));
+		_uart->putstr(msg);
+		*/
+		transferSize = (uint32_t) atol(buff);
+	}
 
 	if (!_autoMode)
 	{
 		memset(buff, 0, sizeof(buff));
-		sprintf_P(buff, PSTR("%d"), transferSize);
-
-		putstr(PSTR("Transfer size: "));
+		sprintf_P(buff, PSTR("Size is: %lu\r\n"), transferSize);
 		_uart->putstr(buff);
-		putstr(PSTR(".\r\n"));
 	}
 
 	// update the global value
