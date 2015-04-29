@@ -17,7 +17,6 @@ extern "C" {
 #include <events/events.h>
 
 #include "board.h"
-#include "XModem.h"
 
 
 #define CMD_MODE_AUTO			'A'

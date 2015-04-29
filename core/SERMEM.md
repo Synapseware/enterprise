@@ -47,7 +47,9 @@ The Sermem class takes advantage of the fact that the serial transfer speed is s
 
     At 38.4K, the time to write 256 bytes to the Enterprise is:
         234.5uS * 256 bytes = ~60mS for a full page of data.
-    However, since a single byte can be transfered in 0.2mS, some caching is required to keep receiving data without interruption.  Here's a table listing cache bytes needed for various transfer speeds:
+
+However, since a single byte can be transfered in 200uS @ 38400, some caching is required to keep receiving data without interruption.  Here's a table listing cache bytes needed for various transfer speeds:
+
     Speed           Time per byte                           Bytes x-ferable in 5mS
     9600            1/9600 * 9      937.5uS                 5.333
     38400           1/38400 * 9     234.5uS                 21.3
@@ -55,6 +57,6 @@ The Sermem class takes advantage of the fact that the serial transfer speed is s
     115200          1/115200 * 9     78.1uS                 64
     250000          1/250000 * 9     36.0uS                 139
         
-> Note: For practical purposes, the buffer used for storing incoming serial data will be set 10 64 bytes.  This buffer will be used while the code detects that the EEPROM is still busy.  As soon as it's not busy, the code will begin draining the buffer to the EEPROM.
+> Note: For practical purposes, the buffer used for storing incoming serial data will be set to 64 bytes.  This buffer will be used while the code detects that the EEPROM is still busy.  As soon as it's not busy, the code will begin draining the buffer to the EEPROM.
 
 
