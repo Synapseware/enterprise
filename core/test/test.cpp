@@ -1,4 +1,5 @@
 #include "test.h"
+#include <drivers/at24c/at24c.h>
 
 
 
@@ -109,13 +110,13 @@ int main(void)
 		int length = result - data;
 		sprintf_P(msg, PSTR("Writing %d bytes to EEPROM\r\n"), length);
 		uart.putstr(msg);
-n
+
 		status = ee_writePage(page, data);
 		if (I2C_OK == status)
 		{
 			uart.putstr_P(PSTR("Successfully wrote data to EEPROM.  Polling write status...\r\n"));
 			ee_poll();
-			uart.putstr_P(PSTR("Done\r\"));
+			uart.putstr_P(PSTR("Done\r\n"));
 		}
 		else
 		{
