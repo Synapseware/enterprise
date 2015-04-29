@@ -7,8 +7,6 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include <avr/io.h>
-#include <avr/interrupt.h>
-#include <avr/sleep.h>
 #include <avr/pgmspace.h>
 
 #include <drivers/at24c/at24c.h>
@@ -34,6 +32,7 @@ extern "C" {
 #define TRANSFER_SUCCESS		'K'
 
 
+
 class Sermem
 {
 public:
@@ -52,6 +51,7 @@ private:
 	void writeCannedData(void);
 	void putstr(const char * pstr);
 
+	XModem		_modem;
 	Uart*		_uart;
 	uint8_t		_transferPageComplete;
 	uint16_t	_bytesTransfered;

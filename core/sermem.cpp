@@ -20,6 +20,14 @@ Sermem::Sermem(Uart* uart)
 {
 	_uart					= uart;
 
+	//std::for_each(s.begin(), s.end(), static_cast<void (A::*)(char)>(&f));
+	//						  XModem(int (*recvChar)(int), void (*sendChar)(char));
+	_modem					= XModem
+	(
+		(static_cast<void*(Uart::*)>(&_uart->read),
+		&(_uart->write(char))
+	);
+
 	_transferPageComplete	= 0;
 	_bytesTransfered		= 0;
 	_transferSize			= 0;

@@ -6,13 +6,13 @@
 #include "CppUTestExt/MockSupport.h"
 #endif
 const unsigned char XModem::NACK = 21;
-const unsigned char XModem::ACK =  6;
+const unsigned char XModem::ACK = 6;
 
-const unsigned char XModem::SOH =  1;
-const unsigned char XModem::EOT =  4;
-const unsigned char XModem::CAN =  0x18;
+const unsigned char XModem::SOH = 1;
+const unsigned char XModem::EOT = 4;
+const unsigned char XModem::CAN = 0x18;
 
-const int XModem::receiveDelay=7000;
+const int XModem::receiveDela y = 7000;
 const int XModem::rcvRetryLimit = 10;
 
 
@@ -23,7 +23,6 @@ XModem::XModem(int (*recvChar)(int msDelay), void (*sendChar)(char sym))
 	this->sendChar = sendChar;
 	this->recvChar = recvChar;
 	this->dataHandler = NULL;
-	
 }
 XModem::XModem(int (*recvChar)(int msDelay), void (*sendChar)(char sym), 
 		bool (*dataHandler)(unsigned long number, char *buffer, int len))
@@ -31,7 +30,6 @@ XModem::XModem(int (*recvChar)(int msDelay), void (*sendChar)(char sym),
 	this->sendChar = sendChar;
 	this->recvChar = recvChar;
 	this->dataHandler = dataHandler;
-	
 }
 
 bool XModem::dataAvail(int delay)
@@ -40,9 +38,8 @@ bool XModem::dataAvail(int delay)
 		return true;
 	if ((this->byte = this->recvChar(delay)) != -1)
 		return true;
-	else
-		return false;
-		
+
+	return false;
 }
 int XModem::dataRead(int delay)
 {
