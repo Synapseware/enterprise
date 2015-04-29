@@ -9,9 +9,8 @@
 #include <events/events.h>
 #include <uart/uart.h>
 
-extern "C" {
 #include <drivers/at24c/at24c.h>
-}
+#include <twi/i2c.h>
 
 #include "enterprise.h"
 
@@ -115,7 +114,7 @@ public:
 	*/
 
 	SoundEffects(Events* events);
-	uint16_t init(void);
+	int init(void);
 	void on(void);
 	void off(void);
 	uint8_t playing(void);
@@ -129,6 +128,8 @@ public:
 	void readComplete(uint8_t sfxdata);
 
 private:
+	int fillHeader(void);
+
 	Events *       _events;
 	SOUND_HEADER   _header;
 	uint8_t        _sample;
@@ -138,15 +139,6 @@ private:
 	uint16_t       _ambientPos;
 	uint8_t        _ambientDelay;
 	uint8_t        _onoff;
-
-
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-	// Fills the header object with data
-	void fillHeader(void)
-	{
-		// load the header into the header struct
-		ee_readBytes(0, sizeof(SOUND_HEADER), (uint8_t*) &_header);
-	}
 };
 
 

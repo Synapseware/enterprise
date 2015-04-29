@@ -422,9 +422,19 @@ void SoundEffects::playSequence(void)
 		delay = (TCNT2 >> 1) | 0x80;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Loads the header data from the EEPROM by reading page 0
+int SoundEffects::fillHeader(void)
+{
+	// load the header into the header struct
+	return ee_readBytes(0, sizeof(SOUND_HEADER), (uint8_t*) &_header);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Initializes the global effects variables and primary effects events
-uint16_t SoundEffects::init(void)
+int SoundEffects::init(void)
 {
 	audioOut_en();
 	ampPwr_en();
@@ -442,7 +452,9 @@ uint16_t SoundEffects::init(void)
 	ee_init(TWI_SPEED);
 
 	// load the header data
-	fillHeader();
+	uint8_t status = fillHeader();
+	if (I2C_OK != status)
+		return status * -1;
 
 	// this handler plays the main ambient sound
 	_events->registerEvent(sampleCallbackHandler, 0, this);

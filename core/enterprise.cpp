@@ -125,11 +125,17 @@ static void checkButton(eventState_t state)
 // Initialize the Effects system
 void initEffects(void)
 {
-	char message[10];
-
 	// initialize effects
-	uint16_t samples = effects.init();
-	sprintf(message, "%d", samples);
+	int samples = effects.init();
+	char message[10];
+	sprintf_P(message, PSTR("%d"), samples);
+
+	if (samples < 0)
+	{
+		uart.putstr_P(PSTR("Warning: Failed to read header data from EEPROM.  Error: "));
+		uart.putstr(message);
+		uart.putstr_P(PSTR("\r\n"));
+	}
 
 	uart.putstr_P(PSTR("Found "));
 	uart.putstr(message);
