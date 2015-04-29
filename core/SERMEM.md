@@ -58,5 +58,3 @@ However, since a single byte can be transfered in 200uS @ 38400, some caching is
     250000          1/250000 * 9     36.0uS                 139
         
 > Note: For practical purposes, the buffer used for storing incoming serial data will be set to 64 bytes.  This buffer will be used while the code detects that the EEPROM is still busy.  As soon as it's not busy, the code will begin draining the buffer to the EEPROM.
-
-
