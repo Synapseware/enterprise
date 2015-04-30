@@ -1,5 +1,5 @@
-#ifndef ENTERPRISE_H
-#define ENTERPRISE_H
+#ifndef __ENTERPRISE_H__
+#define __ENTERPRISE_H__
 
 #include "board.h"
 
