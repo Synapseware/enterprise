@@ -8,11 +8,16 @@ RingBuffer::RingBuffer(char* data, int size)
 
 	_readPos = 0;
 	_writePos = 0;
+	_count = 0;
 }
 
 
 int RingBuffer::Put(char value)
 {
+	if (IsFull())
+		return -1;
+
+	_count++;
 	_buffer[_writePos++] = value;
 	if (_writePos >= _size)
 		_writePos = 0;
@@ -29,21 +34,24 @@ int RingBuffer::Get(void)
 	if (_readPos >= _size)
 		_readPos = 0;
 
+	_count--;
 	return _buffer[_readPos++];
 }
 
 
 bool RingBuffer::IsEmpty(void)
 {
-	return _readPos == _writePos
-		? true
-		: false;
+	return _count == 0;
 }
 
 
 bool RingBuffer::IsFull(void)
 {
-	return (_writePos -1) == _readPos
-		? true
-		: false;
+	return _count == _size;
+}
+
+
+int RingBuffer::Count(void)
+{
+	return _count;
 }

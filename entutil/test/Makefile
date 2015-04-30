@@ -3,7 +3,7 @@ TARGET = test
 
 
 all:
-	g++ $(TARGET).cpp -o $(TARGET)
+	g++ ../../lib/collections/ringbuffer.cpp $(TARGET).cpp -o $(TARGET)
 
 clean:
 	@rm -f $(TARGET)
