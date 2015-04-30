@@ -50,7 +50,7 @@ MCU = atmega328p
 
 # Fuse values
 L_FUSE = 0xFF
-H_FUSE = 0xDF
+H_FUSE = 0xD7
 E_FUSE = 0xFF
 
 
@@ -63,7 +63,7 @@ FORMAT = ihex
 
 
 # Target file name (without extension).
-TARGET = enterprise
+TARGET = test
 
 
 # Object files directory
@@ -77,19 +77,14 @@ LIBSDIR = ../lib
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(LIBSDIR)/at24c/at24c.c					\
-	$(LIBSDIR)/twi/i2c.c						\
-	$(LIBSDIR)/spi/spi.c
+SRC = $(LIBSDIR)/at24c/at24c.c				\
+	$(LIBSDIR)/twi/i2c.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
-CPPSRC = $(TARGET).cpp							\
-	effects.cpp							 		\
-	sermem.cpp									\
-	XModem.cpp									\
-	$(LIBSDIR)/collections/ringbuffer.cpp		\
-	$(LIBSDIR)/nacelle/nacelle.cpp				\
-	$(LIBSDIR)/events/events.cpp				\
+CPPSRC = $(TARGET).cpp						\
+	$(LIBSDIR)/collections/ringbuffer.cpp	\
+	$(LIBSDIR)/events/events.cpp			\
 	$(LIBSDIR)/uart/uart.cpp
 
 
@@ -97,9 +92,14 @@ CPPSRC = $(TARGET).cpp							\
 DEFS  = -DTWI_SPEED=400
 DEFS += -DBAUD=38400
 DEFS += -DUART_RX_BUFFER=64
-DEFS += -DMAX_EVENT_RECORDS=12
+DEFS += -DSAMPLE_RATE=8000 # defined in code
+DEFS += -DMAX_EVENT_RECORDS=24
 DEFS += -DSPI_CLK_4
 DEFS += -DBoard_Enterprise
+DEFS +=	-DTWI_LED_DDR=DDRC
+DEFS +=	-DTWI_LED_PORT=PORTC
+DEFS += -DTWI_LED_PIN=PORTC0
+#DEFS += -DRELEASE
 
 
 # List Assembler source files here.

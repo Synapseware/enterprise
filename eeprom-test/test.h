@@ -1,7 +1,8 @@
-#ifndef __ENTERPRISE_H__
-#define __ENTERPRISE_H__
+#ifndef __TEST_H__
+#define __TEST_H__
 
-#include "board.h"
+
+#include "../core/board.h"
 
 
 #include <avr/io.h>
@@ -13,16 +14,12 @@
 #include <events/events.h>
 #include <uart/uart.h>
 
-
-#include "effects.h"
-#include "sermem.h"
-
-
+#include <at24c/at24c.h>
+#include <twi/i2c.h>
+#include <collections/ringbuffer.h>
 
 
-int main(void);
-void Effects_readCompleteHandler(uint8_t data);
-void Effects_startSampleCompleteHandler(uint8_t result);
+static const char IC2_OK_MSG[] PROGMEM = { "I2C_OK" };
 
 
 const static uint8_t SLEEPY_EYES[] PROGMEM = {
@@ -31,4 +28,3 @@ const static uint8_t SLEEPY_EYES[] PROGMEM = {
 #define SLEEPY_EYES_LEN sizeof(SLEEPY_EYES)/sizeof(uint8_t)
 
 #endif
-

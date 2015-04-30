@@ -1,8 +1,7 @@
-#ifndef _SPIEEPROM_H
-#define _SPIEEPROM_H
+#ifndef __SERMEM_H__
+#define __SERMEM_H__
 
 
-extern "C" {
 #include <types.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,13 +10,11 @@ extern "C" {
 #include <avr/sleep.h>
 #include <avr/pgmspace.h>
 
-#include <drivers/at24c/at24c.h>
-}
+#include <at24c/at24c.h>
 #include <uart/uart.h>
 #include <events/events.h>
 
 #include "board.h"
-#include "XModem.h"
 
 
 #define CMD_MODE_AUTO			'A'
@@ -46,10 +43,9 @@ public:
 private:
 	uint8_t putFile(void);
 	uint8_t getFile(void);
-	void format(void);
+	uint8_t format(void);
 	void tellBlockSize(void);
 	void askTransferSize(void);
-	void writeCannedData(void);
 	void putstr(const char * pstr);
 
 	Uart*		_uart;

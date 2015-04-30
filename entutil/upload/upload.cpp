@@ -181,18 +181,23 @@ bool processUpload(int fd, FILE* file)
 		cout << "  FAIL: Exceeds maximum storage capacity on the Enterprise (256kb)" << endl;
 		return false;
 	}
+	if ((fileSize % 256) != 0)
+	{
+		cout << "  FAIL: File is not aligned to 256 byte page boundary" << endl;
+		return false;
+	}
 
 	// begin upload processing
 	// Send a 'A' to enter auto mode
 	// 		Wait for ACK
+	// Send a 'T'+{filesize\n} to send filesize
+	//		Wait for ACK
 	// Send a 'W' to enter write mode
 	//		Wait for ACK
-	// Send file size as 4 bytes (little Endian)
+	// Send a page of data
 	//		Wait for ACK
-	// Send first page of data
-	//		Wait for ACK
-	// Send remaining pages of data
-	//		Wait for ACK at the end of each page
+	// ... repeat sending page(s) until done
+	// 
 	// Client sends NACK when complete
 
 	cout << "Entering AUTO mode:" << flush;
@@ -205,8 +210,18 @@ bool processUpload(int fd, FILE* file)
 	}
 	cout << " OK" << endl;
 
+	cout << "Sending transfer size:" << flush;
+	sprintf(buffer, "T%d\r", fileSize);
+	writeBytes(fd, buffer, strlen(buffer));
+	if (!waitForAck(fd))
+	{
+		cout << "  FAIL!" << endl;
+		return false;
+	}
+	cout << " OK" << endl;
+
 	// enter write mode
-	cout << "Entering WRITE mdoe:" << flush;
+	cout << "Entering WRITE mode:" << flush;
 	buffer[0] = 'W';
 	writeBytes(fd, buffer, 1);
 	if (!waitForAck(fd))
@@ -215,20 +230,6 @@ bool processUpload(int fd, FILE* file)
 		return false;
 	}
 	cout << " OK" << endl;
-
-	// let client know size of transfer
-	cout << "Sending filesize:" << flush;
-	writeBytes(fd, (char*)&fileSize, 4);
-	if (!waitForAck(fd))
-	{
-		cout << "  FAIL!" << endl;
-		return false;
-	}
-	cout << " OK" << endl;
-
-	readBytes(fd, buffer, 2);
-	uint16_t ps = *(uint16_t*)buffer;
-	cout << "Page size reported as: " << ps << " bytes." << endl;
 
 	// upload the file
 	cout << "Uploading" << flush;
@@ -284,21 +285,23 @@ int mapBaud(int baud)
 	switch (baud)
 	{
 		case 19200:
-			return  B19200;
+			return B19200;
 		case 115200:
-			return  B115200;
+			return B115200;
 		case 57600:
 			return B57600;
+		case 38400:
+			return B38400;
 		case 9600:
-			return  B9600;
+			return B9600;
 		case 4800:
-			return  B4800;
+			return B4800;
 		case 2400:
-			return  B2400;
+			return B2400;
 		case 1800:
-			return  B1800;
+			return B1800;
 		case 1200:
-			return  B1200;
+			return B1200;
 	}
 
 	cout << "Invalid baud rate: " << baud << endl;
