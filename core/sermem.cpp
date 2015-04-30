@@ -64,11 +64,15 @@ uint8_t Sermem::putFile(void)
 	_uart->write(TRANSFER_ACK);
 
 	// get data!
+	int data = 0;
 	while (_transferSize)
 	{
 		// increment the byte counter and save the byte to the EEPROM
-		uint8_t data = _uart->read();
-		ee_putByte(data);
+		if (-1 == (data = _uart->read()))
+			continue;
+
+		// we got valid data, so write it to the EEPROM
+		ee_putByte((char) data);
 
 		// update transfer info
 		bytesTransfered++;
