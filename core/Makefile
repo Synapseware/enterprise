@@ -73,11 +73,11 @@ OBJDIR = .
 
 
 # Shared source code
-LIBSDIR = ../libs
+LIBSDIR = ../lib
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(LIBSDIR)/drivers/at24c/at24c.c			\
+SRC = $(LIBSDIR)/at24c/at24c.c					\
 	$(LIBSDIR)/twi/i2c.c						\
 	$(LIBSDIR)/spi/spi.c
 
@@ -86,7 +86,8 @@ SRC = $(LIBSDIR)/drivers/at24c/at24c.c			\
 CPPSRC = $(TARGET).cpp							\
 	effects.cpp							 		\
 	sermem.cpp									\
-	drivers/nacelle.cpp	 						\
+	$(LIBSDIR)/collections/ringbuffer.cpp		\
+	$(LIBSDIR)/nacelle/nacelle.cpp				\
 	$(LIBSDIR)/events/events.cpp				\
 	$(LIBSDIR)/uart/uart.cpp
 
@@ -94,8 +95,8 @@ CPPSRC = $(TARGET).cpp							\
 # Enterprise definitions
 DEFS  = -DTWI_SPEED=400
 DEFS += -DBAUD=38400
-#DEFS += -DSAMPLE_RATE=8000 # defined in code
-DEFS += -DMAX_EVENT_RECORDS=24
+DEFS += -DUART_RX_BUFFER=64
+DEFS += -DMAX_EVENT_RECORDS=12
 DEFS += -DSPI_CLK_4
 DEFS += -DBoard_Enterprise
 DEFS +=	-DTWI_LED_DDR=DDRC

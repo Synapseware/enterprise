@@ -1,19 +1,18 @@
-#ifndef EFFECTS_H
-#define EFFECTS_H
+#ifndef __EFFECTS_H__
+#define __EFFECTS_H__
+
 
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
 
-#include "board.h"
 #include <events/events.h>
 #include <uart/uart.h>
+#include <at24c/at24c.h>
 
-extern "C" {
-#include <drivers/at24c/at24c.h>
-}
-
+#include "board.h"
 #include "enterprise.h"
+
 
 
 // playback rate, in Hz
