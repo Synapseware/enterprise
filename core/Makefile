@@ -84,6 +84,7 @@ SRC = $(LIBSDIR)/drivers/at24c/at24c.c			\
 
 # List C++ source files here. (C dependencies are automatically generated.)
 CPPSRC = $(TARGET).cpp							\
+	ringbuffer.cpp								\
 	effects.cpp							 		\
 	sermem.cpp									\
 	drivers/nacelle.cpp	 						\
@@ -94,6 +95,7 @@ CPPSRC = $(TARGET).cpp							\
 # Enterprise definitions
 DEFS  = -DTWI_SPEED=400
 DEFS += -DBAUD=38400
+DEFS += -DUART_RX_BUFFER=64
 #DEFS += -DSAMPLE_RATE=8000 # defined in code
 DEFS += -DMAX_EVENT_RECORDS=24
 DEFS += -DSPI_CLK_4

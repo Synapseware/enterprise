@@ -1,10 +1,16 @@
 #include "enterprise.h"
 
+
+// ring buffers...
+char uart_buffer[UART_RX_BUFFER];
+RingBuffer uart_rx_buff(uart_buffer, UART_RX_BUFFER * sizeof(char));
+
 // declare enterprise globals
-Uart				uart;
+Uart				uart(&uart_rx_buff);
 Events				events(MAX_EVENT_RECORDS);
 Sermem				sermem(&uart);
 SoundEffects		effects(&events);
+
 
 
 volatile uint8_t _idx = 0;
