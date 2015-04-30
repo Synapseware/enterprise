@@ -20,6 +20,7 @@ int RingBuffer::Put(char value)
 	return _writePos;
 }
 
+
 int RingBuffer::Get(void)
 {
 	if (this->IsEmpty())
@@ -35,6 +36,14 @@ int RingBuffer::Get(void)
 bool RingBuffer::IsEmpty(void)
 {
 	return _readPos == _writePos
+		? true
+		: false;
+}
+
+
+bool RingBuffer::IsFull(void)
+{
+	return (_writePos -1) == _readPos
 		? true
 		: false;
 }

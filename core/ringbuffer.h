@@ -23,6 +23,9 @@ public:
 	// Returns true if the buffer is empty
 	bool IsEmpty(void);
 
+	// Returns true if the buffer is full
+	bool IsFull(void);
+
 private:
 	char*	_buffer;
 	int		_size;
