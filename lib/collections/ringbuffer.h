@@ -26,12 +26,16 @@ public:
 	// Returns true if the buffer is full
 	bool IsFull(void);
 
+	// returns the number of items in the buffer
+	int Count(void);
+
 private:
 	char*	_buffer;
 	int		_size;
 
 	int		_readPos;
 	int		_writePos;
+	int		_count;
 };
 
 
