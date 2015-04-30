@@ -73,23 +73,23 @@ OBJDIR = .
 
 
 # Shared source code
-LIBSDIR = ../lib
+LIB = ../lib
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(LIBSDIR)/at24c/at24c.c					\
-	$(LIBSDIR)/twi/i2c.c						\
-	$(LIBSDIR)/spi/spi.c
+SRC = $(LIB)/at24c/at24c.c					\
+	$(LIB)/twi/i2c.c						\
+	$(LIB)/spi/spi.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
 CPPSRC = $(TARGET).cpp							\
 	effects.cpp							 		\
 	sermem.cpp									\
-	$(LIBSDIR)/collections/ringbuffer.cpp		\
-	$(LIBSDIR)/nacelle/nacelle.cpp				\
-	$(LIBSDIR)/events/events.cpp				\
-	$(LIBSDIR)/uart/uart.cpp
+	$(LIB)/collections/ringbuffer.cpp		\
+	$(LIB)/nacelle/nacelle.cpp				\
+	$(LIB)/events/events.cpp				\
+	$(LIB)/uart/uart.cpp
 
 
 # Enterprise definitions
@@ -131,7 +131,7 @@ DEBUG = dwarf-2
 #	 Each directory must be seperated by a space.
 #	 Use forward slashes for directory separators.
 #	 For a directory that has spaces, enclose it in quotes.
-EXTRAINCDIRS = $(LIBSDIR)
+EXTRAINCDIRS = $(LIB)
 
 
 # Compiler flag to set the C Standard level.
@@ -255,7 +255,7 @@ MATH_LIB = -lm
 #	 Each directory must be seperated by a space.
 #	 Use forward slashes for directory separators.
 #	 For a directory that has spaces, enclose it in quotes.
-EXTRALIBDIRS = $(LIBSDIR)
+EXTRALIBDIRS = $(LIB)
 
 
 
