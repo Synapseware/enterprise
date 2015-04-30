@@ -1,8 +1,7 @@
-#ifndef _SPIEEPROM_H
-#define _SPIEEPROM_H
+#ifndef __SERMEM_H__
+#define __SERMEM_H__
 
 
-extern "C" {
 #include <types.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,8 +10,7 @@ extern "C" {
 #include <avr/sleep.h>
 #include <avr/pgmspace.h>
 
-#include <drivers/at24c/at24c.h>
-}
+#include <at24c/at24c.h>
 #include <uart/uart.h>
 #include <events/events.h>
 

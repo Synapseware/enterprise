@@ -1,29 +1,39 @@
 #include "enterprise.h"
 
+
+
+// ring buffers...
+char uart_buffer[UART_RX_BUFFER];
+RingBuffer uart_rx_buff(uart_buffer, UART_RX_BUFFER * sizeof(char));
+
+
 // declare enterprise globals
-Uart				uart;
+Uart				uart(&uart_rx_buff);
 Events				events(MAX_EVENT_RECORDS);
 Sermem				sermem(&uart);
 SoundEffects		effects(&events);
 
 
-volatile uint8_t _idx = 0;
+
 volatile uint8_t _val = 0;
 static void fadeStatusLed(eventState_t state)
 {
-	if (_idx == 0)
-		dbg_led_on();
-	else if (_idx >= _val)
+	static uint8_t _idx = 0;
+
+	if (0 == _val || _idx >= _val)
 		dbg_led_off();
+	else
+		dbg_led_on();
+
 	_idx += 4;
 }
 
-volatile uint8_t _i = 0;
 static void readNextStatusVal(eventState_t state)
 {
-	_val = pgm_read_byte(&SLEEPY_EYES[_i++]);
-	if (_i >= SLEEPY_EYES_LEN)
-		_i = 0;
+	static uint8_t idx = 0;
+	_val = pgm_read_byte(&SLEEPY_EYES[idx++]);
+	if (idx >= SLEEPY_EYES_LEN)
+		idx = 0;
 }
 
 
