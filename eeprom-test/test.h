@@ -19,11 +19,13 @@
 #include <collections/ringbuffer.h>
 
 
-static const char IC2_OK_MSG[] PROGMEM = { "I2C_OK" };
+static const char I2C_UKN_MSG[]		PROGMEM = { "Unknown" };
+static const char I2C_OK_MSG[]		PROGMEM = { "OK" };
+static const char I2C_NO_DEV_MSG[]	PROGMEM = { "No device found" };
+static const char I2C_ERROR_MSG[]	PROGMEM = { "Error" };
 
-
-const static uint8_t SLEEPY_EYES[] PROGMEM = {
-	3, 3, 7, 12, 19, 22, 31, 63, 127, 63, 31, 22, 19, 12, 7, 3, 3, 3, 3, 3, 3
+static const uint8_t SLEEPY_EYES[] PROGMEM = {
+	91, 15, 63, 15, 7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
 };
 #define SLEEPY_EYES_LEN sizeof(SLEEPY_EYES)/sizeof(uint8_t)
 

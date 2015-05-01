@@ -32,6 +32,25 @@ static void readNextStatusVal(eventState_t state)
 }
 
 
+
+static uint8_t decay = 0;
+static void showSerialStatusCallback(eventState_t state)
+{
+	if (decay > 0)
+	{
+		decay--;
+		return;
+	}
+
+	serial_led_off();
+}
+static void showSerialStatus(void)
+{
+	decay = 7;
+	serial_led_on();
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Initialize the hardware
 void init(void)
@@ -39,7 +58,9 @@ void init(void)
 	play_led_en();
 	dbg_led_en();
 	serial_led_en();
+	twi_led_en();
 
+	twi_led_off();
 	play_led_off();
 	dbg_led_off();
 	serial_led_off();
@@ -68,8 +89,12 @@ void init(void)
 	SWITCH_PCMSK	|= (1<<SWITCH_PCINT);
 	PCICR			|= (1<<SWITCH_PCICR);
 
+	// initialize the TWI interface
+	i2cInit(400);
+
 	events.registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
-	events.registerEvent(readNextStatusVal, 750, EVENT_STATE_NONE);
+	events.registerHighPriorityEvent(readNextStatusVal, 750, EVENT_STATE_NONE);
+	events.registerHighPriorityEvent(showSerialStatusCallback, 50, EVENT_STATE_NONE);
 
 	// enable all interrupts
 	sei();
@@ -77,26 +102,36 @@ void init(void)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const char* mapStatus(EE_STATUS status)
+const char* mapStatus(EE_STATUS status, char* writeto)
 {
+	const char* pszflash = I2C_UKN_MSG;
 	switch (status)
 	{
 		case I2C_OK:
-			return IC2_OK_MSG;
+			pszflash = I2C_OK_MSG;
+			break;
+		case I2C_ERROR_NODEV:
+			pszflash = I2C_NO_DEV_MSG;
+			break;
+		case I2C_ERROR:
+			pszflash = I2C_ERROR_MSG;
+			break;
 	}
 
-	return NULL;
+	strcpy_P(writeto, pszflash);
+
+	return writeto;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//
-int main(void)
+void processUserData(void)
 {
 	char data[256], msg[128];
 	char* result;
-	int address = 0;
-	int page = 0;
+	int
+		address = 0,
+		page = 0;
 	EE_STATUS status = I2C_OK;
 
 	while(1)
@@ -109,25 +144,53 @@ int main(void)
 			continue;
 		}
 
+		uart.putstr_P(PSTR("  Received the following block of data:\r\n"));
+		uart.putstr_P(PSTR("-----------------------------------------------------\r\n\""));
+		uart.write(data, result - data);
+		uart.putstr_P(PSTR("\"\r\n-----------------------------------------------------\r\n\r\n"));
+
 		int length = result - data;
-		sprintf_P(msg, PSTR("Writing %d bytes to EEPROM\r\n"), length);
+		sprintf_P(msg, PSTR("  Writing %d bytes to EEPROM\r\n"), length);
 		uart.putstr(msg);
 
 		status = ee_writePage(page, data);
 		if (I2C_OK == status)
 		{
-			uart.putstr_P(PSTR("Successfully wrote data to EEPROM.  Polling write status...\r\n"));
+			uart.putstr_P(PSTR("  Successfully wrote data to EEPROM.  Polling write status...\r\n"));
 			ee_poll();
 			uart.putstr_P(PSTR("Done\r\n"));
 		}
 		else
 		{
-			sprintf_P(msg, PSTR("Failed to write.  Error code = %d\r\n"), status);
+			sprintf_P(msg, PSTR("  Failed to write: code (%d) = %s\r\n"), status, mapStatus(status, data));
 			uart.putstr(msg);
 		}
 	}
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+int main(void)
+{
+	init();
+
+	while(1)
+	{
+		// process any pending events
+		events.doEvents();
+
+		processUserData();
+	}
 
 	return 0;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Should be running @ 8.000kHz - this is the event sync driver method
+ISR(TIMER1_COMPA_vect)
+{
+	// trigger event cycle
+	events.sync();
 }
 
 
@@ -135,10 +198,8 @@ int main(void)
 // receive buffer interrupt vector
 ISR(USART_RX_vect)
 {
-	serial_led_on();
+	showSerialStatus();
 
 	char data = UDR0;
 	uart.receiveHandler(data);
-
-	serial_led_off();
 }

@@ -180,17 +180,25 @@ char * Uart::getstr(char * pstr, uint16_t max)
 	if (0 == max)
 		return pstr;
 
-	char data;
+	int data;
 	// make sure we have room for the null character
-	// by leveraging the prefix order
-	while (--max)
+	max -= 1;
+	while (max)
 	{
-		data = read();
+		// keep trying to read if there's no data yet
+		if (-1 == (data = read()))
+			continue;
+
+		// break on a end-of-line type character
 		if (data == '\r' || data == '\n' || data == '\0')
 			break;
-		*pstr++ = data;
+
+		// write the received data to the output buffer
+		*pstr++ = (char) data;
 		max--;
 	}
+
+	// null terminate the string
 	*pstr='\0';
 
 	return pstr;
