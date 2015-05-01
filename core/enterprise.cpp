@@ -7,7 +7,7 @@ char scratch[256];
 
 // UART RX ring buffer
 char uart_buffer[UART_RX_BUFFER];
-RingBuffer uart_rx_buff(uart_buffer, UART_RX_BUFFER * sizeof(char));
+RingBuffer uart_rx_buff(uart_buffer, UART_RX_BUFFER / sizeof(char));
 
 
 // declare enterprise globals
@@ -15,7 +15,6 @@ Uart				uart(&uart_rx_buff);
 Events				events(MAX_EVENT_RECORDS);
 Sermem				sermem(&uart);
 SoundEffects		effects(&events);
-
 
 
 

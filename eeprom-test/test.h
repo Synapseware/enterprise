@@ -3,6 +3,7 @@
 
 
 #include "../core/board.h"
+#include "../core/leds.h"
 
 
 #include <avr/io.h>
@@ -23,10 +24,5 @@ static const char I2C_UKN_MSG[]		PROGMEM = { "Unknown" };
 static const char I2C_OK_MSG[]		PROGMEM = { "OK" };
 static const char I2C_NO_DEV_MSG[]	PROGMEM = { "No device found" };
 static const char I2C_ERROR_MSG[]	PROGMEM = { "Error" };
-
-static const uint8_t SLEEPY_EYES[] PROGMEM = {
-	91, 15, 63, 15, 7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
-};
-#define SLEEPY_EYES_LEN sizeof(SLEEPY_EYES)/sizeof(uint8_t)
 
 #endif

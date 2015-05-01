@@ -48,7 +48,6 @@ uint8_t Sermem::putFile(void)
 	// begin the page write, starting with page 0
 	uint16_t page = 0;
 	uint8_t result = ee_putByteStart(page++);
-	/*
 	if (I2C_OK != result)
 	{
 		char msg[32];
@@ -58,7 +57,6 @@ uint8_t Sermem::putFile(void)
 		_uart->putstr(msg);
 		return TRANSFER_ERR;
 	}
-	*/
 
 	// we're OK so far, send our initial ACK
 	_uart->write(TRANSFER_ACK);
@@ -67,7 +65,11 @@ uint8_t Sermem::putFile(void)
 	while (_transferSize)
 	{
 		// increment the byte counter and save the byte to the EEPROM
-		uint8_t data = _uart->read();
+		int data = _uart->read();
+		if (-1 == data)
+			continue;
+
+		// save the received data
 		ee_putByte(data);
 
 		// update transfer info
@@ -140,17 +142,11 @@ void Sermem::getFileCallback(void)
 // Reads all the data from the chip and sends it to the host
 uint8_t Sermem::getFile(void)
 {
+	int data = 0;
+
 	// Step 1:
 	// Wait for ACK from host to let us know they are ready to send
 	_uart->write(TRANSFER_ACK);
-
-	// Step 2:
-	// Get block size for transfer from client
-	uint8_t transferSizeMultiple = 0;
-	_uart->read((char*)&transferSizeMultiple, sizeof(uint8_t));
-	if (0 == transferSizeMultiple)
-		return TRANSFER_ERR;
-	_transferSize = transferSizeMultiple * 8;
 
 	// Step 3:
 	// Let client know how large of a transfer this will be
@@ -159,7 +155,8 @@ uint8_t Sermem::getFile(void)
 
 	// Step 4:
 	// Make sure client ACK'd our size
-	if (TRANSFER_ACK != _uart->read())
+	while (-1 == (data = _uart->read()));
+	if (TRANSFER_ACK != data)
 		return TRANSFER_ERR;
 
 	// Step 5:
@@ -186,7 +183,11 @@ uint8_t Sermem::getFile(void)
 		_transferPageComplete = 0;
 
 		// get ACK code from client
-		if (TRANSFER_ACK != _uart->read())
+		while (-1 == (data = _uart->read()))
+		{}
+
+		// quit if we didn't get an ack
+		if (TRANSFER_ACK != data)
 			break;
 	}
 
@@ -204,10 +205,16 @@ uint8_t Sermem::getFile(void)
 // formats the chip by writing 0xff to all cells
 uint8_t Sermem::format(void)
 {
+	int data = 0;
 	_uart->write('A');
 	putstr(PSTR("Are you sure want to format?  This will erase all EEPROM data.\r\n"));
-	if ((_uart->read() & 0x5F) == 'Y')
+
+	// wait for data
+	while (-1 == (data = _uart->read());
+	if ((data & 0x5F) == 'Y')
+	{
 		_uart->write('A');
+	}
 	else
 	{
 		putstr(PSTR("Format aborted.\r\n"));
