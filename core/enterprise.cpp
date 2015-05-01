@@ -1,8 +1,11 @@
 #include "enterprise.h"
 
 
+// Scratch buffer
+char scratch[256];
 
-// ring buffers...
+
+// UART RX ring buffer
 char uart_buffer[UART_RX_BUFFER];
 RingBuffer uart_rx_buff(uart_buffer, UART_RX_BUFFER * sizeof(char));
 
@@ -15,67 +18,30 @@ SoundEffects		effects(&events);
 
 
 
-volatile uint8_t _val = 0;
-static void fadeStatusLed(eventState_t state)
-{
-	static uint8_t _idx = 0;
 
-	if (0 == _val || _idx >= _val)
-		dbg_led_off();
-	else
-		dbg_led_on();
-
-	_idx += 4;
-}
-
-static void readNextStatusVal(eventState_t state)
-{
-	static uint8_t idx = 0;
-	_val = pgm_read_byte(&SLEEPY_EYES[idx++]);
-	if (idx >= SLEEPY_EYES_LEN)
-		idx = 0;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// uart receive callback method
-//	gets called by the UART/USART when a byte of data has been received
-volatile char _rxData = 0;
-volatile char _dataReceived = 0;
-static void receiveCallback(char data)
-{
-	_rxData = data;
-	_dataReceived = 0xff;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // processes a communications request from the serial port
 static void processCommRequest(void)
 {
-	if (!_dataReceived)
+	int data = uart.read();
+	if (-1 == data)
 		return;
-
-	// don't process any more coms data
-	uart.readAEnd();
-
-	// setup the UART receive interrupt handler
-	_dataReceived = 0;
 
 	// shutoff effects while processing request
 	effects.off();
 
-	switch (_rxData & 0x5F)
+	switch (data & 0x5F)
 	{
 		case 'V':
 			uart.putstr_P(PSTR("\r\nVersion: 0.5\r\n"));
 			break;
 		default:
 			// process the request
-			sermem.process(_rxData);
+			sermem.process(data);
 			break;
 	}
 
-	uart.readA(&receiveCallback);
 	effects.on();
 }
 
@@ -135,15 +101,10 @@ static void checkButton(eventState_t state)
 // Initialize the Effects system
 void initEffects(void)
 {
-	char message[10];
-
 	// initialize effects
 	uint16_t samples = effects.init();
-	sprintf(message, "%d", samples);
-
-	uart.putstr_P(PSTR("Found "));
-	uart.putstr(message);
-	uart.putstr_P(PSTR(" effects on EEPROM\r\n"));
+	sprintf_P(scratch, PSTR("Found %d samples on the EEPROM\r\n"), samples);
+	uart.putstr(scratch);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -183,7 +144,8 @@ void init(void)
 	PCICR			|= (1<<SWITCH_PCICR);
 
 	events.registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
-	events.registerEvent(readNextStatusVal, 750, EVENT_STATE_NONE);
+	events.registerHighPriorityEvent(readNextStatusVal, 750, EVENT_STATE_NONE);
+	events.registerHighPriorityEvent(showSerialStatusCallback, 50, EVENT_STATE_NONE);
 
 	// enable all interrupts
 	sei();
@@ -202,9 +164,6 @@ int main()
 
 	effects.on();
 	effects.startSample(SFX_EFX_OPENING);
-
-	// setup the UART receive interrupt handler
-	uart.readA(&receiveCallback);
 
 	while(1)
 	{
@@ -242,23 +201,19 @@ ISR(SWITCH_PCVECT)
 // receive buffer interrupt vector
 ISR(USART_RX_vect)
 {
-	serial_led_on();
+	showSerialStatus();
 
 	char data = UDR0;
 	uart.receiveHandler(data);
-
-	serial_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // transmit interrupt vector
 ISR(USART_TX_vect)
 {
-	serial_led_on();
+	showSerialStatus();
 
 	uart.transmitHandler();
-
-	serial_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

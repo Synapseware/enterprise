@@ -2,7 +2,7 @@
 #define __ENTERPRISE_H__
 
 #include "board.h"
-
+#include "leds.h"
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -24,11 +24,6 @@ int main(void);
 void Effects_readCompleteHandler(uint8_t data);
 void Effects_startSampleCompleteHandler(uint8_t result);
 
-
-const static uint8_t SLEEPY_EYES[] PROGMEM = {
-	3, 3, 7, 12, 19, 22, 31, 63, 127, 63, 31, 22, 19, 12, 7, 3, 3, 3, 3, 3, 3
-};
-#define SLEEPY_EYES_LEN sizeof(SLEEPY_EYES)/sizeof(uint8_t)
 
 #endif
 
