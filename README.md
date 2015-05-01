@@ -5,17 +5,21 @@ The Enterprise is a project which adds sound and light effects to a small plasti
 # Project Structure
 ## /board
 This is where the Eagle CAD files reside.  You should use Eagle v7 (or greater) to view/edit.
+
 ## /core
 The heart of the system, driven by an Atmel ATMega328p micro controller clockec at 20MHz.  This is a hand built system and *does not run any Arduino firmware.*  The core is responsible for playing sound effects and coordinating light effects throughout the ship.
+
+## /eeprom-test
+A diagnostic firmware image for tracking down problems with the C++ conversion, hardware issues, etc, that are preventing the EEPROM chips from working correctly.
+
+## /effects
+The sound files used to generate the the EEPROM image file, and the latest binary EEPROM image file.  Plus lots of ther other sound effects.
 
 ## /entutil
 Various programs written in C++ (tested only on Linux), mainly for converting 8bit 8KHz wave files to a standard EEPROM image file for uploading to the core.
 
-## /libs
-It's horrible, but this is the Git submodule which references the [/libs](https://github.com/Synapseware/libs/libs.git) repository.  It's a container repo for various hardware drivers and more reusable system-level software components.
-
-## /loader
-Dead folder.
+## /lib
+Shared code, drivers and other utilities extracte from the [libs](https://github.com/Synapseware/libs/libs.git) repository.
 
 ## /nacelle
 A sub project within the main Enterprise project, the [Nacelle](https://github.com/Synapseware/enterprise/tree/master/nacelle) folder contains all the Atmel assembly language files for the nacelle lighting effects boards.

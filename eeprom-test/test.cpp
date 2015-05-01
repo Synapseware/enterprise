@@ -3,8 +3,8 @@
 
 
 // declare enterprise globals
-char buff[UART_RX_BUFFER];
-RingBuffer			ring_buff(buff, UART_RX_BUFFER/sizeof(char));
+char buff[UART_RX_BUFFER]; // buffer is defaulting to 64 bytes
+RingBuffer			ring_buff(buff, UART_RX_BUFFER * sizeof(char));
 
 Uart				uart(&ring_buff);
 Events				events(MAX_EVENT_RECORDS);
@@ -30,7 +30,6 @@ static void readNextStatusVal(eventState_t state)
 	if (idx >= SLEEPY_EYES_LEN)
 		idx = 0;
 }
-
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

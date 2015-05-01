@@ -69,11 +69,16 @@ private:
 	{
 		return pgm_read_byte((*buff)++);
 	}
-	static void drain_rx(void)
+	void drain_rx(void)
 	{
+		// drain the hardware buffer
 		unsigned char data;
 		while (UCSR0A & (1<<RXC0))
 			data = UDR0;
+
+		// drain the RX ring buffer
+		if (NULL != _uart_rx_buff)
+			while(-1 != _uart_rx_buff->Get());
 	}
 
 	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
