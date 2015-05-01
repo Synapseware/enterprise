@@ -34,7 +34,7 @@
 class Sermem
 {
 public:
-	Sermem(Uart* uart);
+	Sermem(Uart* uart, char* buffer, int length);
 
 	void showHelp(void);
 	void process(char data);
@@ -49,6 +49,9 @@ private:
 	void putstr(const char * pstr);
 
 	Uart*		_uart;
+	char*		_buffer;
+	int			_length;
+
 	uint8_t		_transferPageComplete;
 	uint16_t	_bytesTransfered;
 	uint32_t	_transferSize;
