@@ -233,5 +233,4 @@ void i2cInit(unsigned short bitrateKHz)
 		bitrate_div = (bitrate_div-16) >> 1;
 
 	TWBR = bitrate_div;
-	//TWBR = 17;
 }
