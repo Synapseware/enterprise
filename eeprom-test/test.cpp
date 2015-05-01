@@ -33,24 +33,6 @@ static void readNextStatusVal(eventState_t state)
 
 
 
-static uint8_t decay = 0;
-static void showSerialStatusCallback(eventState_t state)
-{
-	if (decay > 0)
-	{
-		decay--;
-		return;
-	}
-
-	serial_led_off();
-}
-static void showSerialStatus(void)
-{
-	decay = 7;
-	serial_led_on();
-}
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Initialize the hardware
 void init(void)
