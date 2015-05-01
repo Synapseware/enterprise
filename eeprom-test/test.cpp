@@ -4,32 +4,11 @@
 
 // declare enterprise globals
 char buff[UART_RX_BUFFER]; // buffer is defaulting to 64 bytes
-RingBuffer			ring_buff(buff, UART_RX_BUFFER * sizeof(char));
+RingBuffer			ring_buff(buff, UART_RX_BUFFER / sizeof(char));
 
 Uart				uart(&ring_buff);
 Events				events(MAX_EVENT_RECORDS);
 
-
-
-volatile uint8_t _val = 0;
-static void fadeStatusLed(eventState_t state)
-{
-	static uint8_t _idx = 0;
-
-	if (0 == _val || _idx >= _val)
-		dbg_led_off();
-	else
-		dbg_led_on();
-
-	_idx += 4;
-}
-static void readNextStatusVal(eventState_t state)
-{
-	static uint8_t idx = 0;
-	_val = pgm_read_byte(&SLEEPY_EYES[idx++]);
-	if (idx >= SLEEPY_EYES_LEN)
-		idx = 0;
-}
 
 
 
