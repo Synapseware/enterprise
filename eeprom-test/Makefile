@@ -99,7 +99,7 @@ DEFS += -DBoard_Enterprise
 DEFS +=	-DTWI_LED_DDR=DDRC
 DEFS +=	-DTWI_LED_PORT=PORTC
 DEFS += -DTWI_LED_PIN=PORTC0
-#DEFS += -DRELEASE
+DEFS += -Drelease
 
 
 # List Assembler source files here.

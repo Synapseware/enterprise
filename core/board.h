@@ -35,7 +35,7 @@
 
 #define serial_led_off()	SERIAL_LED_PORT |= (1<<SERIAL_LED_PIN)
 #define serial_led_on()		SERIAL_LED_PORT &= ~(1<<SERIAL_LED_PIN)
-#define serial_led_en()		SERIAL_LED_PORT |= (1<<SERIAL_LED_PIN)
+#define serial_led_en()		SERIAL_LED_DDR |= (1<<SERIAL_LED_PIN)
 
 
 //----------------------------------------------------------------------------------------------
