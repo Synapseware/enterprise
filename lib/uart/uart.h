@@ -24,35 +24,33 @@ class Uart
 public:
 	typedef void (*uart_rx_callback_t)(char);
 	typedef void (*uart_tx_callback_t)(void);
-	typedef void (*uart_asyncCallback_t)(void);
 
-	typedef char (*f_reader_t)(volatile const char**);
-
-	//Uart(void);
 	Uart(RingBuffer* rx_buff);
 
-	void putstr(const char* pstr);
-	void putstr_P(const char* pstr);
-	void putstrAM(const char * pstr, uart_asyncCallback_t callBack);
+	// writes a character of data to the UART
+	void write(char x);
 
-	char * getstr(char * pstr, uint16_t max);
+	// writes a string from SRAM to the UART
+	void write(const char* pstr);
 
-	void writeA(uart_tx_callback_t callBack);
-	void writeAEnd(void);
-	void readA(uart_rx_callback_t callBack);
-	void readAEnd(void);
+	// writes a block of data from SRAM to the UART
+	void write(const char * buffer, int length);
+
+	// writes a string from FLASH to the UART
+	void write_P(const char* pstr);
+
+	// writes a block of data from FLASH to the UART
+	void write_P(const char* pstr, int length);
 
 	// returns true if data is waiting in the receivers register
 	bool dataWaiting(void);
 
 	// reads a byte of data from the buffer or returns -1 if not data available
 	int read(void);
-
-	// blocks until the number of bytes read is received
+	void readA(uart_rx_callback_t callBack);
+	void readAEnd(void);
 	void read(char * buffer, uint16_t length);
-
-	void write(char x);
-	void write(const char * buffer, uint16_t length);
+	char * getstr(char * pstr, uint16_t max);
 
 	// blocks the caller until data is available
 	void wait(void);
@@ -61,14 +59,14 @@ public:
 	void transmitHandler(void);
 
 private:
-	inline char sram_read(const char** buff)
-	{
-		return *(*buff)++;
-	}
-	inline char pgm_read(const char** buff)
-	{
-		return pgm_read_byte((*buff)++);
-	}
+	RingBuffer *			_rx_buff;
+	uart_tx_callback_t		_tx_callback;
+	uart_rx_callback_t		_rx_callback;
+	const char*				_txAsyncData;
+	uint16_t				_txAsyncLen;
+	char					_asyncBusy;
+
+
 	void drain_rx(void)
 	{
 		// drain the hardware buffer
@@ -77,52 +75,9 @@ private:
 			data = UDR0;
 
 		// drain the RX ring buffer
-		if (NULL != _uart_rx_buff)
-			while(-1 != _uart_rx_buff->Get());
+		if (NULL != _rx_buff)
+			while(-1 != _rx_buff->Get());
 	}
-
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	void uart_putstrAMHandler(void)
-	{
-		char data = pgm_read_byte(_txAsyncData++);
-		if (data == 0)
-		{
-			writeAEnd();
-			if (_txAsyncCallback)
-				_txAsyncCallback();
-			_txAsyncCallback = 0;
-			_asyncBusy = 0;
-		}		
-		else
-			write(data);
-	}
-	void uart_putstrAM(const char * pstr, uart_asyncCallback_t callBack)
-	{
-		while(_asyncBusy);
-		
-		_txAsyncCallback	= callBack;
-		_txAsyncData		= pstr;
-		_asyncBusy			= 1;
-
-		writeA(callBack);
-
-		write(pgm_read_byte(_txAsyncData++));
-	}
-	static inline void null_handler(void)
-	{}
-
-
-
-	RingBuffer *			_uart_rx_buff;
-
-	uart_tx_callback_t		_uart_tx_callback;
-	uart_rx_callback_t		_uart_rx_callback;
-	const char*				_txAsyncData;
-	uint16_t				_txAsyncLen;
-	char					_asyncBusy;
-
-	uart_asyncCallback_t	_txAsyncCallback;
-	uart_asyncCallback_t	_rxAsyncCallback;
 };
 
 

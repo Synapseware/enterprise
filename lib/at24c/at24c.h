@@ -55,8 +55,6 @@ extern "C" {
 #define ASYNC_MULTI_STOP		7
 
 
-typedef	uint8_t EE_STATUS;
-
 
 //---------------------------------------------------------------------------
 
@@ -67,20 +65,19 @@ EE_STATUS ee_setpage(uint16_t page);
 void ee_setpageA(uint16_t page, fStatusCallback callBack);
 
 uint8_t ee_read(void);
-void ee_readEnd(void);
 void ee_readA(fStatusCallback callBack);
 
-EE_STATUS ee_readBytes(uint16_t page, uint16_t length, uint8_t * data);
-void ee_readBytesA(uint16_t page, uint16_t length, uint8_t * data, fStatusCallback callBack);
+EE_STATUS ee_readBytes(uint16_t page, void * data, int length);
+void ee_readBytesA(uint16_t page, void * data, int length, fStatusCallback callBack);
 
 EE_STATUS ee_writePage(uint16_t page, void * data);
-EE_STATUS ee_writeBytes(uint16_t address, void * data, uint8_t length);
+EE_STATUS ee_writeBytes(uint16_t address, void * data, int length);
 
 EE_STATUS ee_putByteStart(uint16_t page);
 void ee_putByte(uint8_t data);
 void ee_poll(void);
 bool ee_busy(void);
-void ee_putBytesEnd(void);
+void ee_end(void);
 
 void ee_init(unsigned short bitrateKHz);
 

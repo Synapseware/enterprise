@@ -83,9 +83,10 @@ SRC = $(LIB)/at24c/at24c.c					\
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
-CPPSRC = $(TARGET).cpp							\
-	effects.cpp							 		\
-	sermem.cpp									\
+CPPSRC = $(TARGET).cpp						\
+	effects.cpp							 	\
+	sermem.cpp								\
+	leds.cpp								\
 	$(LIB)/collections/ringbuffer.cpp		\
 	$(LIB)/nacelle/nacelle.cpp				\
 	$(LIB)/events/events.cpp				\
@@ -94,8 +95,8 @@ CPPSRC = $(TARGET).cpp							\
 
 # Enterprise definitions
 DEFS  = -DTWI_SPEED=400
-DEFS += -DBAUD=38400
-DEFS += -DUART_RX_BUFFER=64
+DEFS += -DBAUD=115200
+DEFS += -DUART_RX_BUFFER=128
 DEFS += -DMAX_EVENT_RECORDS=12
 DEFS += -DSPI_CLK_4
 DEFS += -DBoard_Enterprise

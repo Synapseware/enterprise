@@ -86,6 +86,30 @@ const char* mapStatus(EE_STATUS status, char* writeto)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void showData(char* buffer, int length)
+{
+	char msg[128];
+	sprintf_P(msg, PSTR("Reading %d bytes from EEPROM\r\n"), length);
+	uart.write(msg);
+
+	EE_STATUS status = ee_readBytes(0, buffer, length);
+	if (I2C_OK == status)
+	{
+		uart.write_P(PSTR("Read OK\r\n"));
+
+		uart.write_P(PSTR("-----------------------------------------------------\r\n\""));
+		uart.write(buffer, length - 1);
+		uart.write_P(PSTR("\"\r\n-----------------------------------------------------\r\n"));
+	}
+	else
+	{
+		sprintf_P(msg, PSTR("  Failed to write: code (%d) = %s\r\n"), status, mapStatus(status, buffer));
+		uart.write(msg);
+	}
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void processUserData(void)
 {
 	char data[256], msg[128];
@@ -97,34 +121,36 @@ void processUserData(void)
 
 	while(1)
 	{
-		uart.putstr_P(PSTR("Enter a line of text to write to the EEPROM\r\n"));
+		uart.write_P(PSTR("Enter a line of text to write to the EEPROM\r\n"));
 		result = uart.getstr(data, sizeof(data));
 		if (result == data)
 		{
-			uart.putstr_P(PSTR("No data received.\r\n"));
+			uart.write_P(PSTR("No data received.\r\n"));
 			continue;
 		}
 
-		uart.putstr_P(PSTR("  Received the following block of data:\r\n"));
-		uart.putstr_P(PSTR("-----------------------------------------------------\r\n\""));
+		uart.write_P(PSTR("  Received the following block of data:\r\n"));
+		uart.write_P(PSTR("-----------------------------------------------------\r\n\""));
 		uart.write(data, result - data);
-		uart.putstr_P(PSTR("\"\r\n-----------------------------------------------------\r\n\r\n"));
+		uart.write_P(PSTR("\"\r\n-----------------------------------------------------\r\n\r\n"));
 
-		int length = result - data;
+		int length = result - data + 1;
 		sprintf_P(msg, PSTR("  Writing %d bytes to EEPROM\r\n"), length);
-		uart.putstr(msg);
+		uart.write(msg);
 
-		status = ee_writePage(page, data);
+		status = ee_writeBytes(page, data, length);
 		if (I2C_OK == status)
 		{
-			uart.putstr_P(PSTR("  Successfully wrote data to EEPROM.  Polling write status...\r\n"));
+			uart.write_P(PSTR("  Successfully wrote data to EEPROM.  Polling write status...\r\n"));
 			ee_poll();
-			uart.putstr_P(PSTR("Done\r\n"));
+			uart.write_P(PSTR("Done\r\n"));
+
+			showData(data, length);
 		}
 		else
 		{
 			sprintf_P(msg, PSTR("  Failed to write: code (%d) = %s\r\n"), status, mapStatus(status, data));
-			uart.putstr(msg);
+			uart.write(msg);
 		}
 	}
 }

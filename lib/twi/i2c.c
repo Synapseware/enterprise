@@ -32,11 +32,6 @@ inline void i2cSendStop(void)
 	// transmit stop condition
     TWCR = TWI_STOP;
 }
-inline void i2cSendStopAsync(fVoidCallback cb)
-{
-	i2c_callBack = cb;
-    TWCR =  TWI_STOP | (1<<TWIE);
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline void i2cWaitForComplete(void)
@@ -44,28 +39,20 @@ inline void i2cWaitForComplete(void)
 	// wait for i2c interface to complete operation
     while (!(TWCR & (1<<TWINT)));
 
-	twi_led_off();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline void i2cWaitForStop(void)
-{
-	//while (!(inb(TWCR) & (1<<TWSTO)));
-    //while (!(TWCR & (1<<TWINT)));
-    //TODO: Do we need to wait for stop?
+	//twi_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline void i2cSendByte(uint8_t data)
 {
-	twi_led_on();
+	//twi_led_on();
 	TWDR = data;
 	TWCR = TWI_SEND;
 }
 inline void i2cSendByteAsync(uint8_t data, fVoidCallback cb)
 {
+	//twi_led_on();
 	i2c_callBack = cb;
-	twi_led_on();
 	TWDR = data;
 	TWCR = TWI_SEND | (1<<TWIE);
 }
@@ -73,7 +60,8 @@ inline void i2cSendByteAsync(uint8_t data, fVoidCallback cb)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline void i2cAck(void)
 {
-	TWCR |= (1<<TWEA);
+	TWCR |= (1<<TWEA);	// we can't clear the TWINT flag because then the wait won't work
+	//TWCR = TWI_ACK;
 }
 void i2cAckA(fVoidCallback cb)
 {
@@ -84,7 +72,8 @@ void i2cAckA(fVoidCallback cb)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline void i2cNack(void)
 {
-	TWCR &= ~TWEA;
+	TWCR &= ~(1<<TWEA);	// we can't clear the TWINT flag because then the wait won't work
+	//TWCR = TWI_NACK;
 }
 void i2cNackA(fVoidCallback cb)
 {
@@ -100,7 +89,7 @@ inline uint8_t i2cGetReceivedByte(void)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline uint8_t i2cGetStatus(void)
+inline EE_STATUS i2cGetStatus(void)
 {
 	// retrieve current i2c status from i2c TWSR
 	// bits 1:0 on ATMega are for the prescaler, so mask them out!
@@ -135,7 +124,7 @@ void i2cMasterRawWrite(uint16_t length, uint8_t * data)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Sends a block of data without a trailing stop
-uint8_t i2cMasterSendNoStopNI(uint8_t deviceAddr, uint16_t length, uint8_t * data)
+EE_STATUS i2cMasterSendNoStopNI(uint8_t deviceAddr, uint16_t length, uint8_t * data)
 {
 	// send start condition
 	i2cSendStart();
@@ -159,21 +148,25 @@ uint8_t i2cMasterSendNoStopNI(uint8_t deviceAddr, uint16_t length, uint8_t * dat
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Sends a block of data with a trailing stop
-uint8_t i2cMasterSendNI(uint8_t deviceAddr, uint16_t length, uint8_t * data)
+EE_STATUS i2cMasterSendNI(uint8_t deviceAddr, uint16_t length, uint8_t * data)
 {
-	uint8_t retval = i2cMasterSendNoStopNI(deviceAddr, length, data);
+	twi_led_on();
+
+	EE_STATUS retval = i2cMasterSendNoStopNI(deviceAddr, length, data);
 
 	// transmit stop condition
 	// leave with TWEA on for slave receiving
 	i2cSendStop();
-	i2cWaitForStop();
+	twi_led_off();
 
 	return retval;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint8_t i2cMasterReceiveNI(uint8_t deviceAddr, uint16_t length, uint8_t * data)
+EE_STATUS i2cMasterReceiveNI(unsigned char deviceAddr, void * data, int length)
 {
+	twi_led_on();
+
 	// send start condition
 	i2cSendStart();
 	i2cWaitForComplete();
@@ -186,26 +179,36 @@ uint8_t i2cMasterReceiveNI(uint8_t deviceAddr, uint16_t length, uint8_t * data)
 	// device did not ACK it's address,
 	// data will not be transferred
 	// return error
-	if (TW_STATUS != TW_MR_SLA_ACK)
-		return I2C_ERROR_NODEV;
-
-	// accept receive data and ack it
-	while (length > 1)
+	if (i2cGetStatus() != TW_MR_SLA_ACK)
 	{
-		i2cAck();
+		i2cSendStop();
+		twi_led_off();
+		return I2C_ERROR_NODEV;
+	}
+
+	unsigned char* ptr = (unsigned char*) data;
+
+	// accept received data and ack it
+	i2cAck();
+	while (length > 2)
+	{
 		i2cWaitForComplete();
-		*data++ = i2cGetReceivedByte();
+		*ptr = i2cGetReceivedByte();
+		i2cAck();
+
+		ptr++;
 		length--;
 	}
 
-	// accept receive data and nack it (last-uint8_t signal)
-	i2cNack();
+	// accept received data and nack it (last-uint8_t signal)
 	i2cWaitForComplete();
-	*data++ = i2cGetReceivedByte();
+	*ptr = i2cGetReceivedByte();
+	i2cNack();
 
 	// transmit stop condition
+	i2cWaitForComplete();
 	i2cSendStop();
-	i2cWaitForStop();
+	twi_led_off();
 
 	return I2C_OK;
 }
@@ -221,8 +224,6 @@ void i2cInit(unsigned short bitrateKHz)
 
 	twi_led_en();
 	twi_led_off();
-
-	TWCR = 0;
 
 	// set i2c bitrate
 	// SCL freq = F_CPU/(16+2*TWBR)) (prescaler = 1)

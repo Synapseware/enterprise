@@ -16,6 +16,7 @@
 
 #include "effects.h"
 #include "sermem.h"
+#include "leds.h"
 
 
 

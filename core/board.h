@@ -28,25 +28,25 @@
 
 
 //----------------------------------------------------------------------------------------------
-// LED2 - Serial LED
-#define SERIAL_LED_PORT		PORTC
-#define SERIAL_LED_DDR		DDRC
-#define SERIAL_LED_PIN		PORTC1
-
-#define serial_led_off()	SERIAL_LED_PORT |= (1<<SERIAL_LED_PIN)
-#define serial_led_on()		SERIAL_LED_PORT &= ~(1<<SERIAL_LED_PIN)
-#define serial_led_en()		SERIAL_LED_DDR |= (1<<SERIAL_LED_PIN)
-
-
-//----------------------------------------------------------------------------------------------
-// LED3 - Play LED
+// LED2 - Play LED
 #define LED_PLAY_PORT		PORTC
 #define LED_PLAY_DDR		DDRC
-#define LED_PLAY_PIN		PORTC2
+#define LED_PLAY_PIN		PORTC1
 
 #define play_led_off()		LED_PLAY_PORT |= (1<<LED_PLAY_PIN)
 #define play_led_on()		LED_PLAY_PORT &= ~(1<<LED_PLAY_PIN)
 #define play_led_en()		LED_PLAY_DDR |= (1<<LED_PLAY_PIN)
+
+
+//----------------------------------------------------------------------------------------------
+// LED3 - Serial LED
+#define SERIAL_LED_PORT		PORTC
+#define SERIAL_LED_DDR		DDRC
+#define SERIAL_LED_PIN		PORTC2
+
+#define serial_led_off()	SERIAL_LED_PORT |= (1<<SERIAL_LED_PIN)
+#define serial_led_on()		SERIAL_LED_PORT &= ~(1<<SERIAL_LED_PIN)
+#define serial_led_en()		SERIAL_LED_DDR |= (1<<SERIAL_LED_PIN)
 
 
 //----------------------------------------------------------------------------------------------
@@ -75,9 +75,9 @@
 #define AMPPWR_PORT			PORTD
 #define AMPPWR_OUT_PIN		PORTD4
 
-#define ampPwr_en()			AMPPWR_DDR |= (1<<AMPPWR_OUT_PIN)
-#define ampPwr_on()			AMPPWR_PORT |= (1<<AMPPWR_OUT_PIN)
 #define ampPwr_off()		AMPPWR_PORT &= ~(1<<AMPPWR_OUT_PIN)
+#define ampPwr_on()			AMPPWR_PORT |= (1<<AMPPWR_OUT_PIN)
+#define ampPwr_en()			AMPPWR_DDR |= (1<<AMPPWR_OUT_PIN)
 
 
 //----------------------------------------------------------------------------------------------

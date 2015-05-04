@@ -53,12 +53,12 @@ uint8_t Sermem::putFile(void)
 	if (I2C_OK != result)
 	{
 		sprintf_P(_buffer, PSTR("Error: %d.  Failed to start EEPROM write sequence\r\n"), result);
-		_uart->putstr(_buffer);
+		_uart->write(_buffer);
 		return TRANSFER_ERR;
 	}
 
 	// we're OK so far, send our initial ACK
-	_uart->write(TRANSFER_ACK);
+	ack();
 
 	// get data!
 	while (_transferSize)
@@ -90,7 +90,7 @@ uint8_t Sermem::putFile(void)
 		ee_putByteStart(page++);
 
 		// ack the page
-		_uart->write(TRANSFER_ACK);
+		ack();
 	}
 
 	// final wrap up
@@ -102,7 +102,7 @@ uint8_t Sermem::putFile(void)
 
 	// nack the end of the transfer
 	putstr(PSTR("Transfer complete\r\n"));
-	_uart->write(TRANSFER_NACK);
+	nack();
 
 	// return success
 	return TRANSFER_SUCCESS;
@@ -125,7 +125,7 @@ void Sermem::getFileCallback(void)
 		_transferPageComplete = 1;
 
 		// disable the async transmit
-		_uart->writeAEnd();
+		//_uart->writeAEnd();
 	}
 	else
 	{
@@ -145,7 +145,7 @@ uint8_t Sermem::getFile(void)
 
 	// Step 1:
 	// Wait for ACK from host to let us know they are ready to send
-	_uart->write(TRANSFER_ACK);
+	ack();
 
 	// Step 3:
 	// Let client know how large of a transfer this will be
@@ -191,10 +191,10 @@ uint8_t Sermem::getFile(void)
 	}
 
 	// make sure async mode is disabled
-	_uart->writeAEnd();
+	//_uart->writeAEnd();
 
 	// send final NACK
-	_uart->write(TRANSFER_NACK);
+	nack();
 
 	// return success
 	return TRANSFER_SUCCESS;
@@ -204,21 +204,21 @@ uint8_t Sermem::getFile(void)
 // formats the chip by writing 0xff to all cells
 uint8_t Sermem::format(void)
 {
-	int data = 0;
-	_uart->write('A');
-	putstr(PSTR("Are you sure want to format?  This will erase all EEPROM data.\r\n"));
+	ack();
+	putstr(PSTR("This will erase all EEPROM data!  Really format?\r\n"));
 
 	// wait for data
+	int data = 0;
 	while (-1 == (data = _uart->read()));
-	if ((data & 0x5F) == 'Y')
-	{
-		_uart->write('A');
-	}
-	else
+	if ('Y' != (data & 0x5F))
 	{
 		putstr(PSTR("Format aborted.\r\n"));
+		nack();
 		return TRANSFER_NACK;
 	}
+
+	ack();
+	putstr(PSTR("Formatting\r\n"));
 
 	uint16_t length = 0;
 	uint16_t page = 0;
@@ -226,7 +226,7 @@ uint8_t Sermem::format(void)
 	{
 		if (I2C_OK != ee_setpage(page++))
 		{
-			putstr(PSTR("Format failed.  Could not set format page."));
+			putstr(PSTR("Format failed.  Could not set format page.\r\n"));
 			return TRANSFER_ERR;
 		}
 
@@ -251,7 +251,7 @@ uint8_t Sermem::format(void)
 void Sermem::tellBlockSize(void)
 {
 	sprintf_P(_buffer, PSTR("Block size: %d\r\n"), AT24C1024_PAGE_SIZE);
-	_uart->putstr(_buffer);
+	_uart->write(_buffer);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -267,11 +267,11 @@ void Sermem::askTransferSize(void)
 	{
 		/*
 		sprintf_P(_buffer, PSTR("Received %i bytes\r\n"), result - buff);
-		_uart->putstr(_buffer);
+		_uart->write(_buffer);
 		sprintf_P(_buffer, PSTR("Buffer is: \"%s\"\r\n"), buff);
-		_uart->putstr(_buffer);
+		_uart->write(_buffer);
 		sprintf_P(_buffer, PSTR("Value is: %lu and %d\r\n"), atol(buff), atol(buff));
-		_uart->putstr(_buffer);
+		_uart->write(_buffer);
 		*/
 		transferSize = (uint32_t) atol(_buffer);
 	}
@@ -279,24 +279,22 @@ void Sermem::askTransferSize(void)
 	if (!_autoMode)
 	{
 		sprintf_P(_buffer, PSTR("Size is: %lu\r\n"), transferSize);
-		_uart->putstr(_buffer);
+		_uart->write(_buffer);
 	}
 
 	// update the global value
 	if (transferSize > 0)
 		_transferSize = transferSize;
 
-	_uart->write(TRANSFER_ACK);
+	ack();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Sermem::putstr(const char * pstr)
 {
-	if (_autoMode)
-		return;
-
-	_uart->putstr_P(pstr);
+	if (!_autoMode)
+	 	_uart->write_P(pstr);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -321,14 +319,12 @@ void Sermem::process(char data)
 	{
 		// auto-mode
 		case CMD_MODE_AUTO:
-			_uart->write(TRANSFER_ACK);
-			_autoMode = 1;
+			autoMode();
 			break;
 
 		// manual mode
 		case CMD_MODE_MANUAL:
-			_autoMode = 0;
-			putstr(PSTR("Manual mode now selected.\r\n"));
+			manualMode();
 			break;
 
 		// retrieve EEPROM contents

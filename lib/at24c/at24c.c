@@ -117,13 +117,16 @@ EE_STATUS __writeActiveAddress(uint16_t page)
 EE_STATUS ee_setpage(uint16_t page)
 {
 	// set current address on device
-	__writeActiveAddress(page);
+	EE_STATUS status = __writeActiveAddress(page);
+	if (I2C_OK != status)
+	{
+		i2cSendStop();
+		return status;
+	}
 
 	// transmit stop condition
 	// leave with TWEA on for slave receiving
 	i2cSendStop();
-	i2cWaitForStop();
-	//i2cWaitForComplete();
 
 	return I2C_OK;
 }
@@ -239,11 +242,6 @@ uint8_t ee_read(void)
 	//incrementAddress();
 
 	return data;
-}
-void ee_readEnd(void)
-{
-	//i2cSendStop();
-	//i2cWaitForStop();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -406,7 +404,26 @@ void ee_readBytesHandler(void)
 		break;
 	}
 }
-void ee_readBytesA(uint16_t page, uint16_t length, uint8_t * data, fStatusCallback callBack)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// reads the specified page of data from the eeprom chip
+EE_STATUS ee_readBytes(uint16_t page, void * data, int length)
+{
+	EE_STATUS status = __writeActiveAddress(page);
+	if (I2C_OK != status)
+		return status;
+
+	// perform block read
+	status = i2cMasterReceiveNI(AT24C1024_ADDRESS, data, length);
+	if (I2C_OK != status)
+		return status;
+
+	return I2C_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// asynchronously reads a block of data
+void ee_readBytesA(uint16_t page, void * data, int length, fStatusCallback callBack)
 {
 	if (_asyncStep != ASYNC_COMPLETE)
 		return;
@@ -417,24 +434,7 @@ void ee_readBytesA(uint16_t page, uint16_t length, uint8_t * data, fStatusCallba
 	_onComplete		= callBack;
 	_asyncStep		= ASYNC_MULTI_START;
 
-
 	ee_readBytesHandler();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// reads the specified page of data from the eeprom chip
-EE_STATUS ee_readBytes(uint16_t page, uint16_t length, uint8_t * data)
-{
-	EE_STATUS status = __writeActiveAddress(page);
-	if (I2C_OK != status)
-		return status;
-
-	// perform block read
-	status = i2cMasterReceiveNI(AT24C1024_ADDRESS, length, data);
-	if (I2C_OK != status)
-		return status;
-
-	return I2C_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -450,14 +450,14 @@ EE_STATUS ee_writePage(uint16_t page, void * data)
 	i2cMasterRawWrite(AT24C1024_PAGE_SIZE, (uint8_t*)data);
 
 	// terminate the page write
-	ee_putBytesEnd();
+	ee_end();
 
 	return I2C_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Writes an arbitrary block of data to the EEPROM.
-EE_STATUS ee_writeBytes(uint16_t address, void * data, uint8_t length)
+EE_STATUS ee_writeBytes(uint16_t address, void * data, int length)
 {
 	// initiate a page write sequence
 	if (__writeActiveAddress(address) != I2C_OK)
@@ -467,7 +467,7 @@ EE_STATUS ee_writeBytes(uint16_t address, void * data, uint8_t length)
 	i2cMasterRawWrite((uint16_t) length, (uint8_t*)data);
 
 	// terminate the page write
-	ee_putBytesEnd();
+	ee_end();
 
 	return I2C_OK;
 }
@@ -491,12 +491,15 @@ void ee_putByte(uint8_t data)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Closes a page write sequence.  This blocks while the EEPROM is busy writing the data.
-void ee_putBytesEnd(void)
+// Closes a page write sequence.
+void ee_end(void)
 {
+	// nack
+	//i2cNack();
+	//i2cWaitForComplete();
+
 	// terminate write operation
 	i2cSendStop();
-	//i2cWaitForComplete();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -509,22 +512,7 @@ void ee_poll(void)
 	operation desired. Only if the internal write cycle has completed will the EEPROM respond with
 	a zero, allowing the read or write sequence to continue.
 	*/
-
-	while(1)
-	{
-		i2cSendStart();
-		i2cWaitForComplete();
-
-		i2cSendByte(_device & I2C_WRITE);
-		i2cWaitForComplete();
-
-		if (i2cGetStatus() == TW_MT_SLA_ACK)
-		{
-			i2cSendStop();
-			//i2cWaitForComplete();
-			break;
-		}
-	}
+	while(ee_busy());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
