@@ -190,7 +190,7 @@ EE_STATUS i2cMasterReceiveNI(unsigned char deviceAddr, void * data, int length)
 
 	// accept received data and ack it
 	i2cAck();
-	while (length > 2)
+	while (length > 1)
 	{
 		i2cWaitForComplete();
 		*ptr = i2cGetReceivedByte();
