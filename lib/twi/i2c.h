@@ -53,14 +53,16 @@ extern "C" {
 #endif
 
 
+
 // defines and constants
 static const uint8_t TWCR_CMD_MASK			= 0x0F;
 static const uint8_t TWSR_STATUS_MASK		= 0xF8;
 
-// return values
-static const uint8_t I2C_OK					= 0x00;
-static const uint8_t I2C_ERROR_NODEV		= 0x01;
-static const uint8_t I2C_ERROR				= 0x02;
+// status values
+typedef	uint8_t EE_STATUS;
+static const EE_STATUS I2C_OK				= 0x00;
+static const EE_STATUS I2C_ERROR_NODEV		= 0x01;
+static const EE_STATUS I2C_ERROR			= 0x02;
 
 // WRITE/READ masks and flags
 static const uint8_t I2C_WRITE				= 0xFE;
@@ -77,9 +79,6 @@ void i2cSendStartAsync(fVoidCallback cb);
 
 //! Send an I2C stop condition in Master mode
 void i2cSendStop(void);
-void i2cSendStopAsync(fVoidCallback cb);
-
-void i2cWaitForStop(void);
 
 //! Wait for current I2C operation to complete
 void i2cWaitForComplete(void);
@@ -96,10 +95,10 @@ void i2cAckA(fVoidCallback cb);
 void i2cNack(void);
 void i2cNackA(fVoidCallback cb);
 
-//! Pick up the data that was received with i2cReceiveByte()
+// Pick up the data that was received with i2cReceiveByte()
 unsigned char i2cGetReceivedByte(void);
 
-//! Get current I2c bus status from TWSR
+// Get current I2c bus status from TWSR
 unsigned char i2cGetStatus(void);
 
 // Sends the specified value, repeat count times
@@ -108,14 +107,14 @@ void i2cMasterRawWriteRepeat(uint16_t repeat, unsigned char value);
 // Sends a block of raw-data over the TWI interface
 void i2cMasterRawWrite(uint16_t length, unsigned char * data);
 
-//! send I2C data to a device on the bus (non-interrupt based) without a trailing stop
+// send I2C data to a device on the bus (non-interrupt based) without a trailing stop
 unsigned char i2cMasterSendNoStopNI(unsigned char deviceAddr, uint16_t length, unsigned char * data);
 
-//! send I2C data to a device on the bus (non-interrupt based)
+// send I2C data to a device on the bus (non-interrupt based)
 unsigned char i2cMasterSendNI(unsigned char deviceAddr, uint16_t length, unsigned char * data);
 
-//! receive I2C data from a device on the bus (non-interrupt based)
-unsigned char i2cMasterReceiveNI(unsigned char deviceAddr, uint16_t length, unsigned char * data);
+// receive I2C data from a device on the bus (non-interrupt based)
+unsigned char i2cMasterReceiveNI(unsigned char deviceAddr, void * data, int length);
 
 
 #ifdef  __cplusplus

@@ -103,9 +103,6 @@ void SoundEffects::readComplete(uint8_t sfxdata)
 
 	// take the average of the sample and the ambient effects
 	OCR2B = ((uint16_t)_sample + (uint16_t)_ambient) >> 1;
-
-	if (!_length)
-		ee_readEnd();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -424,7 +421,7 @@ void SoundEffects::playSequence(void)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Initializes the global effects variables and primary effects events
-uint16_t SoundEffects::init(void)
+int SoundEffects::init(void)
 {
 	audioOut_en();
 	ampPwr_en();

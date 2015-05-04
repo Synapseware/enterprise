@@ -29,6 +29,7 @@
 #define TRANSFER_NACK			'N'
 #define TRANSFER_ERR			'E'
 #define TRANSFER_SUCCESS		'K'
+#define TRANSFER_DOT			'.'
 
 
 class Sermem
@@ -39,14 +40,35 @@ public:
 	void showHelp(void);
 	void process(char data);
 	void getFileCallback(void);
+	uint8_t format(void);
 
 private:
 	uint8_t putFile(void);
 	uint8_t getFile(void);
-	uint8_t format(void);
 	void tellBlockSize(void);
 	void askTransferSize(void);
 	void putstr(const char * pstr);
+
+	void ack(void)
+	{
+		if(!_autoMode)
+			_uart->write(TRANSFER_ACK);
+	}
+	void nack(void)
+	{
+		if (!_autoMode)
+			_uart->write(TRANSFER_NACK);
+	}
+	void autoMode(void)
+	{
+		_autoMode = 1;
+		ack();
+	}
+	void manualMode(void)
+	{
+		_autoMode = 0;
+		putstr(PSTR("Manual mode now selected.\r\n"));
+	}
 
 	Uart*		_uart;
 	char*		_buffer;

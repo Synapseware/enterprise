@@ -5,6 +5,7 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
+#include <string.h>
 
 #include <events/events.h>
 #include <uart/uart.h>
@@ -63,7 +64,7 @@ public:
 	{
 		uint16_t          samples;              // + 0	// # of samples (0-255)
 		SOUND_EFFECT      effects[42];          // + 2	// array of sound effects
-	} volatile SOUND_HEADER;                    // 2 + 42 * 6 bytes = 254 bytes
+	} SOUND_HEADER;                    			// 2 + 42 * 6 bytes = 254 bytes
 
 	/*
 	Event entry will contain:
@@ -114,7 +115,7 @@ public:
 	*/
 
 	SoundEffects(Events* events);
-	uint16_t init(void);
+	int init(void);
 	void on(void);
 	void off(void);
 	uint8_t playing(void);
@@ -144,7 +145,13 @@ private:
 	void fillHeader(void)
 	{
 		// load the header into the header struct
-		ee_readBytes(0, sizeof(SOUND_HEADER), (uint8_t*) &_header);
+		memset(&_header, 0, sizeof(SOUND_HEADER));
+		ee_readBytes(0, &_header, 254);
+		i2cSendStop();
+		if (0xFFFF == _header.samples)
+		{
+			_header.samples = 0;
+		}
 	}
 };
 

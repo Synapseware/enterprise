@@ -1,18 +1,6 @@
-#ifndef __LEDS_H__
-#define __LEDS_H__
-
-#include <avr/io.h>
-#include <avr/pgmspace.h>
-
-#include <inttypes.h>
-#include <events/events.h>
-#include "board.h"
+#include "leds.h"
 
 /*
-static void fadeStatusLed(eventState_t state);
-static void readNextStatusVal(eventState_t state);
-static void showSerialStatusCallback(eventState_t state);
-*/
 const static uint8_t SLEEPY_EYES[] PROGMEM = {
 	3, 3, 7, 12, 19, 22, 31, 63, 127, 63, 31, 22, 19, 12, 7, 3, 3, 3, 3, 3, 3
 };
@@ -59,5 +47,4 @@ static void showSerialStatus(void)
 	decay = 4;
 	serial_led_on();
 }
-
-#endif
+*/

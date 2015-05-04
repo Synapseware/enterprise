@@ -2,27 +2,21 @@
 
 
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Constructor
 Uart::Uart(RingBuffer* rx_buff = NULL)
 {
-	_uart_rx_buff		= rx_buff;
+	_rx_buff		= rx_buff;
 
-	_uart_tx_callback	= 0;
-	_uart_rx_callback	= 0;
+	_tx_callback	= 0;
+	_rx_callback	= 0;
 	_txAsyncData		= 0;
 	_txAsyncLen			= 0;
 	_asyncBusy			= 0;
 
-	_txAsyncCallback	= 0;
-	_rxAsyncCallback	= 0;
-
 	// set baud values from macro
 	UBRR0H =	UBRRH_VALUE;
 	UBRR0L =	UBRRL_VALUE;
-	//UBRR0L =	(UBRRN & 0xFF);		// Don't use BAUD macro...
-	//UBRR0H =	(UBRRN >> 8);
 
 	UCSR0A =	(0<<U2X0) |			// no clock rate doubling
 				(0<<MPCM0);			// no multi-processor communication mode
@@ -59,7 +53,7 @@ void Uart::readA(uart_rx_callback_t callBack)
 	drain_rx();
 
 	// setup the callback and enable interrupt
-	_uart_rx_callback = callBack;
+	_rx_callback = callBack;
 	//UCSR0B |= (1<<RXCIE0);
 }
 
@@ -68,34 +62,18 @@ void Uart::readA(uart_rx_callback_t callBack)
 void Uart::readAEnd(void)
 {
 	//UCSR0B &= ~(1<<RXCIE0);
-	_uart_rx_callback = 0;
+	_rx_callback = 0;
 	drain_rx();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Starts asynchronous transmit mode
-void Uart::writeA(uart_tx_callback_t callBack)
-{
-	_uart_tx_callback = callBack;
-	UCSR0B |= (1<<TXCIE0);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// ends asynchronous transmit mode
-void Uart::writeAEnd(void)
-{
-	UCSR0B &= ~(1<<TXCIE0);
-	_uart_tx_callback = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Reads a byte of data from the UART.
 int Uart::read(void)
 {
-	if (NULL != _uart_rx_buff)
+	if (NULL != _rx_buff)
 	{
 		// read data from RX buffer
-		return _uart_rx_buff->Get();
+		return _rx_buff->Get();
 	}
 
 	// wait for data
@@ -116,60 +94,6 @@ void Uart::read(char * buffer, uint16_t length)
 
 		*buffer++ = (char) data;
 	}
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// blocks until data is available
-void Uart::wait(void)
-{
-	if (NULL != _uart_rx_buff)
-	{
-		while (_uart_rx_buff->IsEmpty())
-		{}
-		return;
-	}
-
-	while (0 == (UCSR0A & (1<<RXC0)));
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// writes a character of data to the UART
-void Uart::write(char data)
-{
-	// wait for empty receive buffer
-	while (0 == (UCSR0A & (1<<UDRE0)));
-
-	// send
-	UDR0 = data;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// writes a block of data to the UART
-void Uart::write(const char * buffer, uint16_t length)
-{
-	while (length)
-	{
-		write(*buffer++);
-		length--;
-	}
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// writes a string from RAM
-void Uart::putstr(const char * pstr)
-{
-	char data;
-	while (0 != (data = *pstr++))
-		write(data);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// writes a string from PROGMEM (program memory)
-void Uart::putstr_P(const char * pstr)
-{
-	char data;
-	while (0 != (data = pgm_read_byte(pstr++)))
-		write(data);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -205,13 +129,81 @@ char * Uart::getstr(char * pstr, uint16_t max)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// blocks until data is available
+void Uart::wait(void)
+{
+	if (NULL != _rx_buff)
+	{
+		while (_rx_buff->IsEmpty());
+		return;
+	}
+
+	while (0 == (UCSR0A & (1<<RXC0)));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// writes a character of data to the UART
+void Uart::write(char data)
+{
+	// wait for empty receive buffer
+	while (0 == (UCSR0A & (1<<UDRE0)));
+
+	// send
+	UDR0 = data;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// writes a string from RAM
+void Uart::write(const char* pstr)
+{
+	char data;
+	while (0 != (data = *pstr))
+	{
+		write(data);
+		pstr++;
+	}
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// writes a block of data to the UART
+void Uart::write(const char * buffer, int length)
+{
+	while (length)
+	{
+		write(*buffer);
+		buffer++;
+		length--;
+	}
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// writes a string from PROGMEM (program memory)
+void Uart::write_P(const char * pstr)
+{
+	char data;
+	while (0 != (data = pgm_read_byte(pstr++)))
+		write(data);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// writes a string from PROGMEM (program memory)
+void Uart::write_P(const char * pstr, int length)
+{
+	while (length)
+	{
+		write(pgm_read_byte(pstr++));
+		length--;
+	}
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // returns true if data is avialable in the receive register
 bool Uart::dataWaiting(void)
 {
-	if (NULL != _uart_rx_buff)
+	if (NULL != _rx_buff)
 	{
 		// return true if the buffer isn't empty
-		return !_uart_rx_buff->IsEmpty();
+		return !_rx_buff->IsEmpty();
 	}
 
 	// returns 0 if no data waiting
@@ -222,17 +214,17 @@ bool Uart::dataWaiting(void)
 // Should be called by the UART RX ISR
 void Uart::receiveHandler(char data)
 {
-	if (NULL != _uart_rx_buff)
-		_uart_rx_buff->Put(data);
+	if (NULL != _rx_buff)
+		_rx_buff->Put(data);
 
-	if (_uart_rx_callback)
-		_uart_rx_callback(data);
+	if (NULL != _rx_callback)
+		_rx_callback(data);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Should be called by the UART TX ISR
 void Uart::transmitHandler(void)
 {
-	if (_uart_tx_callback)
-		_uart_tx_callback();
+	if (_tx_callback)
+		_tx_callback();
 }

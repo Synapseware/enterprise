@@ -1,8 +1,58 @@
 #include "enterprise.h"
 
 
+
+
+const static uint8_t SLEEPY_EYES[] PROGMEM = {
+	3, 3, 7, 12, 19, 22, 31, 63, 127, 63, 31, 22, 19, 12, 7, 3, 3, 3, 3, 3, 3
+};
+const uint8_t SLEEPY_EYES_LEN = sizeof(SLEEPY_EYES)/sizeof(uint8_t);
+
+
+//----------------------------------------------------------------------------------------------
+// Shows the heart-beat pattern on the debug LED
+static uint8_t _val = 0;
+static void fadeStatusLed(eventState_t state)
+{
+	uint8_t _idx = 0;
+
+	if (0 == _val || _idx >= _val)
+		dbg_led_off();
+	else
+		dbg_led_on();
+
+	_idx += 4;
+}
+static void readNextStatusVal(eventState_t state)
+{
+	static uint8_t idx = 0;
+	_val = pgm_read_byte(&SLEEPY_EYES[idx++]);
+	if (idx >= SLEEPY_EYES_LEN)
+		idx = 0;
+}
+
+//----------------------------------------------------------------------------------------------
+// Used to show activity across the serial port
+static uint8_t decay = 0;
+static void showSerialStatusCallback(eventState_t state)
+{
+	if (decay > 0)
+	{
+		decay--;
+		return;
+	}
+
+	serial_led_off();
+}
+static void showSerialStatus(void)
+{
+	decay = 4;
+	serial_led_on();
+}
+
+
 // Scratch buffer
-char scratch[256];
+char scratch[128];
 
 
 // UART RX ring buffer
@@ -17,36 +67,9 @@ Sermem				sermem(&uart, scratch, sizeof(scratch) / sizeof(char));
 SoundEffects		effects(&events);
 
 
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// processes a communications request from the serial port
-static void processCommRequest(void)
-{
-	int data = uart.read();
-	if (-1 == data)
-		return;
-
-	// shutoff effects while processing request
-	effects.off();
-
-	switch (data & 0x5F)
-	{
-		case 'V':
-			uart.putstr_P(PSTR("\r\nVersion: 0.5\r\n"));
-			break;
-		default:
-			// process the request
-			sermem.process(data);
-			break;
-	}
-
-	effects.on();
-}
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // enables the button after a timeout
-volatile uint8_t _wakingUp = 0;
+static uint8_t _wakingUp = 0;
 static void enableButton(eventState_t state)
 {
 
@@ -97,13 +120,39 @@ static void checkButton(eventState_t state)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// processes a communications request from the serial port
+static void processCommRequest(void)
+{
+	int data = uart.read();
+	if (-1 == data)
+		return;
+
+	// shutoff effects while processing request
+	//effects.off();
+
+	switch (data & 0x5F)
+	{
+		case 'V':
+			uart.write_P(PSTR("\r\nVersion: 0.5\r\n"));
+			break;
+		default:
+			// process the request
+			sermem.process(data);
+			break;
+	}
+
+	//effects.on();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Initialize the Effects system
 void initEffects(void)
 {
 	// initialize effects
-	uint16_t samples = effects.init();
-	sprintf_P(scratch, PSTR("Found %d samples on the EEPROM\r\n"), samples);
-	uart.putstr(scratch);
+	uart.write_P(PSTR("Initializing effects header\r\n"));
+	int samples = effects.init();
+	int len = sprintf_P(scratch, PSTR("  Found %d samples on the EEPROM\r\n"), samples);
+	uart.write(scratch, len);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -143,8 +192,8 @@ void init(void)
 	PCICR			|= (1<<SWITCH_PCICR);
 
 	events.registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
-	events.registerHighPriorityEvent(readNextStatusVal, 750, EVENT_STATE_NONE);
-	events.registerHighPriorityEvent(showSerialStatusCallback, 50, EVENT_STATE_NONE);
+	events.registerHighPriorityEvent(readNextStatusVal, 1000, EVENT_STATE_NONE);
+	events.registerHighPriorityEvent(showSerialStatusCallback, 100, EVENT_STATE_NONE);
 
 	// enable all interrupts
 	sei();
@@ -156,13 +205,13 @@ int main()
 {
 	init();
 
-	uart.putstr_P(PSTR("Enterprise main board booting up.\r\n"));
+	uart.write_P(PSTR("Enterprise main board booting up.\r\n"));
 	sermem.showHelp();
 
-	initEffects();
+	//initEffects();
 
-	effects.on();
-	effects.startSample(SFX_EFX_OPENING);
+	//effects.on();
+	//effects.startSample(SFX_EFX_OPENING);
 
 	while(1)
 	{
