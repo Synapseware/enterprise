@@ -18,7 +18,7 @@ static	fStatusCallback _onComplete;
 // invokes any onComplete method and finalizes the async operation
 void _eeComplete(uint8_t result)
 {
-	if (0 != _onComplete)
+	if (_onComplete)
 		_onComplete(result);
 
 	_onComplete		= 0;
@@ -27,11 +27,15 @@ void _eeComplete(uint8_t result)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // abort any current transactions
-void _asyncError(void)
+void _asyncError(unsigned char status)
 {
 	i2cSendStop();
 
-	_eeComplete(0xFF);
+	if (_onComplete)
+		_eeComplete(status);
+
+	_onComplete		= 0;
+	_asyncStep		= ASYNC_COMPLETE;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -138,6 +142,7 @@ void ee_setPageAHandler(void)
 	// device for a 'write' operation, but aborting the write before
 	// sending any data to the chip.  a re-start is initiated with the
 	// device which starts the sequential read
+	unsigned char status = i2cGetStatus();
 	switch (_asyncStep)
 	{
 		// send start signal
@@ -148,9 +153,9 @@ void ee_setPageAHandler(void)
 
 		// send device address with write
 		case ASYNC_SEND_DEVICE:
-			if (i2cGetStatus() != TW_START)
+			if (status != TW_START)
 			{
-				_asyncError();
+				_asyncError(status);
 				return;
 			}
 
@@ -160,9 +165,9 @@ void ee_setPageAHandler(void)
 
 		// send address MSB
 		case ASYNC_SEND_ADDRMSB:
-			if (i2cGetStatus() != TW_MT_SLA_ACK)
+			if (status != TW_MT_SLA_ACK)
 			{
-				_asyncError();
+				_asyncError(status);
 				return;
 			}
 
@@ -172,9 +177,9 @@ void ee_setPageAHandler(void)
 
 		// send address LSB
 		case ASYNC_SEND_ADDRLSB:
-			if (i2cGetStatus() != TW_MT_DATA_ACK)
+			if (status != TW_MT_DATA_ACK)
 			{
-				_asyncError();
+				_asyncError(status);
 				return;
 			}
 
@@ -184,9 +189,9 @@ void ee_setPageAHandler(void)
 
 		// end the transaction
 		case ASYNC_SEND_STOP:
-			if (i2cGetStatus() != TW_MT_DATA_ACK)
+			if (status != TW_MT_DATA_ACK)
 			{
-				_asyncError();
+				_asyncError(status);
 				return;
 			}
 
@@ -248,44 +253,51 @@ uint8_t ee_read(void)
 // Initiates an async read operation
 void ee_readAHandler(void)
 {
+	unsigned char status = i2cGetStatus();
 	switch(_asyncStep)
 	{
 		// send a start signal
 		case ASYNC_NEXT_START:
 			_asyncStep = ASYNC_NEXT_DEVICE;
-			i2cSendStartAsync(ee_readAHandler);
-			break;
+			//i2cSendStartAsync(ee_readAHandler);
+			i2cSendStart();
+			i2cWaitForComplete();
+			status = i2cGetStatus();
+			//return;
 
 		// send SLA+R
-		case ASYNC_NEXT_DEVICE:
-			if (i2cGetStatus() != TW_START)
+		//case ASYNC_NEXT_DEVICE:
+			if (status != TW_START)
 			{
-				_asyncError();
-				break;
+				_asyncError(status);
+				return;
 			}
 
 			_asyncStep = ASYNC_NEXT_NACK;
 			i2cSendByteAsync(_device | I2C_READ, ee_readAHandler);
-			break;
+			return;
 
 		// setup TWI module to NACK the response
 		case ASYNC_NEXT_NACK:
-			if (i2cGetStatus() != TW_MR_SLA_ACK)
+			if (status != TW_MR_SLA_ACK)
 			{
-				_asyncError();
-				break;
+				_asyncError(status);
+				return;
 			}
 
 			_asyncStep = ASYNC_NEXT_READ;
-			i2cNackA(ee_readAHandler);
-			break;
+			//i2cNackA(ee_readAHandler);
+			i2cNack();
+			i2cWaitForComplete();
+			status = i2cGetStatus();
+			//return;
 
 		// capture the received data	
-		case ASYNC_NEXT_READ:
-			if (i2cGetStatus() != TW_MR_DATA_NACK)
+		//case ASYNC_NEXT_READ:
+			if (status != TW_MR_DATA_NACK)
 			{
-				_asyncError();
-				break;
+				_asyncError(status);
+				return;
 			}
 
 			// read received data
@@ -299,7 +311,7 @@ void ee_readAHandler(void)
 			// increment the address pointer	
 			incrementAddress();
 
-			break;
+			return;
 	}
 }
 void ee_readA(fStatusCallback callBack)
@@ -322,49 +334,50 @@ void ee_readBytesHandler(void)
 	// device for a 'write' operation, but aborting the write before
 	// sending any data to the chip.  a re-start is initiated with the
 	// device which starts the sequential read
+	unsigned char status = i2cGetStatus();
 	switch (_asyncStep)
 	{
 		// send start signal
 		case ASYNC_MULTI_START:
 			_asyncStep = ASYNC_MULTI_DEVICE;
 			i2cSendStartAsync(ee_readBytesHandler);
-			break;
+			return;
 
 		// send device address with write
 		case ASYNC_MULTI_DEVICE:
-			if (i2cGetStatus() != TW_START)
+			if (status != TW_START)
 			{
-				_asyncError();
-				break;
+				_asyncError(status);
+				return;
 			}
 
 			_asyncStep = ASYNC_MULTI_ADDRMSB;
 			i2cSendByteAsync(_device & I2C_WRITE, ee_readBytesHandler);
-		break;
+			return;
 
 		// send address MSB
 		case ASYNC_MULTI_ADDRMSB:
-			if (i2cGetStatus() != TW_MT_SLA_ACK)
+			if (status != TW_MT_SLA_ACK)
 			{
-				_asyncError();
-				break;
+				_asyncError(status);
+				return;
 			}
 
 			_asyncStep = ASYNC_MULTI_ADDRLSB;
 			i2cSendByteAsync(_address >> 8, ee_readBytesHandler);
-		break;
+			return;
 
 		// send address LSB
 		case ASYNC_MULTI_ADDRLSB:
-			if (i2cGetStatus() != TW_MT_DATA_ACK)
+			if (status != TW_MT_DATA_ACK)
 			{
-				_asyncError();
-				break;
+				_asyncError(status);
+				return;
 			}
 
 			_asyncStep = ASYNC_MULTI_READ;
 			i2cSendByteAsync(_address & 0xff, ee_readBytesHandler);
-		break;
+			return;
 
 		// prepare appropriate reply for recceived byte(s)
 		case ASYNC_MULTI_READ:
@@ -373,7 +386,7 @@ void ee_readBytesHandler(void)
 				i2cAckA(ee_readBytesHandler);
 			else
 				i2cNackA(ee_readBytesHandler);
-			break;
+			return;
 
 		// get the byte and
 		case ASYNC_MULTI_NEXT:
@@ -388,20 +401,20 @@ void ee_readBytesHandler(void)
 			}
 			else
 				_asyncStep = ASYNC_MULTI_STOP;
-			break;
+			return;
 
 		// end the transaction
 		case ASYNC_MULTI_STOP:
-			if (i2cGetStatus() != TW_MT_DATA_ACK)
+			if (status != TW_MT_DATA_ACK)
 			{
-				_asyncError();
-				break;
+				_asyncError(status);
+				return;
 			}
 
 			i2cSendStop();
 
 			_eeComplete(0);
-		break;
+			return;
 	}
 }
 
@@ -460,8 +473,9 @@ EE_STATUS ee_writePage(uint16_t page, void * data)
 EE_STATUS ee_writeBytes(uint16_t address, void * data, int length)
 {
 	// initiate a page write sequence
-	if (__writeActiveAddress(address) != I2C_OK)
-		return I2C_ERROR;
+	EE_STATUS status = __writeActiveAddress(address);
+	if (status != I2C_OK)
+		return status;
 
 	// perform block write
 	i2cMasterRawWrite((uint16_t) length, (uint8_t*)data);
