@@ -106,25 +106,11 @@ void SoundEffects::readComplete(uint8_t sfxdata)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// starts playback of a sample based on it's signature
-void SoundEffects::startSampleComplete(uint8_t result)
-{
-	if (0 == result)
-	{
-		_playState = SAMPLE_PLAYING;
-		//play_led_on();
-	}
-	else
-		_playState = SAMPLE_NONE;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // enables all sound effects
 void SoundEffects::on(void)
 {
 	_onoff = SFX_ON;
 	ampPwr_on();
-	play_led_on();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -133,7 +119,6 @@ void SoundEffects::off(void)
 {
 	_onoff = SFX_OFF;
 	ampPwr_off();
-	play_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -159,6 +144,22 @@ void SoundEffects::startSample(uint8_t index)
 	_playState = SAMPLE_LOADING;
 	_length	= _header.effects[index].length;
 	ee_setpageA(_header.effects[index].startPage, &Effects_startSampleCompleteHandler);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// starts playback of a sample based on it's signature
+void SoundEffects::startSampleComplete(uint8_t result)
+{
+	if (0 == result)
+	{
+		_playState = SAMPLE_PLAYING;
+		play_led_on();
+	}
+	else
+	{
+		_playState = SAMPLE_NONE;
+		play_led_off();
+	}
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -441,9 +442,8 @@ int SoundEffects::init(void)
 	// load the header data
 	fillHeader();
 
-	// this handler plays the main ambient sound
+	// this handler renders the audio data to the PWM pin
 	_events->registerEvent(sampleCallbackHandler, 0, this);
-
 	if (_header.samples > 0)
 	{
 		_events->registerEvent(playAmbientHandler, 2650, this);		// plays random ambient sounds

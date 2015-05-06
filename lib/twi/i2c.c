@@ -8,7 +8,7 @@ volatile fVoidCallback i2c_callBack = 0;
 ISR(TWI_vect)
 {
 	// invoke the callback method if one is given
-	if (0 != i2c_callBack)
+	if (i2c_callBack)
 		i2c_callBack();
 
 	twi_led_off();
@@ -39,19 +39,19 @@ inline void i2cWaitForComplete(void)
 	// wait for i2c interface to complete operation
     while (!(TWCR & (1<<TWINT)));
 
-	//twi_led_off();
+	twi_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline void i2cSendByte(uint8_t data)
 {
-	//twi_led_on();
+	twi_led_on();
 	TWDR = data;
 	TWCR = TWI_SEND;
 }
 inline void i2cSendByteAsync(uint8_t data, fVoidCallback cb)
 {
-	//twi_led_on();
+	twi_led_on();
 	i2c_callBack = cb;
 	TWDR = data;
 	TWCR = TWI_SEND | (1<<TWIE);
@@ -61,7 +61,6 @@ inline void i2cSendByteAsync(uint8_t data, fVoidCallback cb)
 inline void i2cAck(void)
 {
 	TWCR |= (1<<TWEA);	// we can't clear the TWINT flag because then the wait won't work
-	//TWCR = TWI_ACK;
 }
 void i2cAckA(fVoidCallback cb)
 {
@@ -73,7 +72,6 @@ void i2cAckA(fVoidCallback cb)
 inline void i2cNack(void)
 {
 	TWCR &= ~(1<<TWEA);	// we can't clear the TWINT flag because then the wait won't work
-	//TWCR = TWI_NACK;
 }
 void i2cNackA(fVoidCallback cb)
 {
@@ -150,16 +148,14 @@ EE_STATUS i2cMasterSendNoStopNI(uint8_t deviceAddr, uint16_t length, uint8_t * d
 // Sends a block of data with a trailing stop
 EE_STATUS i2cMasterSendNI(uint8_t deviceAddr, uint16_t length, uint8_t * data)
 {
-	twi_led_on();
-
-	EE_STATUS retval = i2cMasterSendNoStopNI(deviceAddr, length, data);
+	EE_STATUS status = i2cMasterSendNoStopNI(deviceAddr, length, data);
 
 	// transmit stop condition
 	// leave with TWEA on for slave receiving
 	i2cSendStop();
-	twi_led_off();
+	i2cWaitForComplete();
 
-	return retval;
+	return status;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

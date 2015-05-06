@@ -80,7 +80,7 @@ uint8_t Sermem::putFile(void)
 			continue;
 
 		// end the write cycle
-		ee_putBytesEnd();
+		ee_end();
 
 		// poll the device for write-complete
 		ee_poll();
@@ -96,7 +96,7 @@ uint8_t Sermem::putFile(void)
 	// final wrap up
 	if (bytesTransfered != 0)
 	{
-		ee_putBytesEnd();
+		ee_end();
 		ee_poll();
 	}
 
@@ -234,7 +234,7 @@ uint8_t Sermem::format(void)
 			ee_putByte(0xFF);
 		length = 0;
 
-		ee_putBytesEnd();
+		ee_end();
 
 		// poll the device for write-complete
 		ee_poll();
@@ -288,7 +288,6 @@ void Sermem::askTransferSize(void)
 
 	ack();
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Sermem::putstr(const char * pstr)
