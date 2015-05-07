@@ -34,127 +34,96 @@ static const uint8_t	RT_FIXED			= 0x08;	 // fixed schedule (not set implies a ra
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-class SoundEffects
+// Header structure...
+//	0	0x02	2		Signature
+//	1
+//	2	0x04	2		Start Page
+//	3
+//	4	0x06	2		Total Pages
+//	5
+//	6	0x08	1		Bytes Used In Last Page
+//	7			1		Reserved
+//	8	0x0A	2		Sample Rate
+//	9
+//	A	start of next entry...
+
+// SOUND_EFFECT reflects an individual entry in the header record
+typedef struct
 {
-public:
+	uint16_t		startPage;				// + 2		2
+	uint32_t		length;					// + 4		4
+} volatile SOUND_EFFECT;					// 6 bytes
 
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-	// Header structure...
-	//	0	0x02	2		Signature
-	//	1
-	//	2	0x04	2		Start Page
-	//	3
-	//	4	0x06	2		Total Pages
-	//	5
-	//	6	0x08	1		Bytes Used In Last Page
-	//	7			1		Reserved
-	//	8	0x0A	2		Sample Rate
-	//	9
-	//	A	start of next entry...
+// SOUND_HEADER reflects the actual header record
+typedef struct
+{
+	uint16_t          samples;              // + 0	// # of samples (0-255)
+	SOUND_EFFECT      effects[42];          // + 2	// array of sound effects
+} SOUND_HEADER;                    			// 2 + 42 * 6 bytes = 254 bytes
 
-	// SOUND_EFFECT reflects an individual entry in the header record
-	typedef struct
-	{
-		uint16_t		startPage;				// + 2		2
-		uint32_t		length;					// + 4		4
-	} volatile SOUND_EFFECT;					// 6 bytes
+/*
+Event entry will contain:
+	- the sample to play (by index)
+	- the delay to the next sample
+	- the next sample (by index)
+*/
 
-	// SOUND_HEADER reflects the actual header record
-	typedef struct
-	{
-		uint16_t          samples;              // + 0	// # of samples (0-255)
-		SOUND_EFFECT      effects[42];          // + 2	// array of sound effects
-	} SOUND_HEADER;                    			// 2 + 42 * 6 bytes = 254 bytes
+/*
+Dynamic events require a few things...
+- a playback function
+	are we playing back a random event?
+	a fixed event?
+	a sound event?
+	a lighting event?
+	a motion event?
+- an event schedule (done, events.c)
+- storage (done, EEPROM)
+- generic playback event
 
-	/*
-	Event entry will contain:
-		- the sample to play (by index)
-		- the delay to the next sample
-		- the next sample (by index)
-	*/
+Event header "records" will require:
+	- record type (sound, light, motion)
+	- callback interval
+	- number of samples in the effects record
 
-	/*
-	Dynamic events require a few things...
-	- a playback function
-		are we playing back a random event?
-		a fixed event?
-		a sound event?
-		a lighting event?
-		a motion event?
-	- an event schedule (done, events.c)
-	- storage (done, EEPROM)
-	- generic playback event
+Event entry will contain:
+	- the sample to play (by index)
+	- the delay to the next sample
+	- the next sample (by index)
+*/
 
-	Event header "records" will require:
-		- record type (sound, light, motion)
-		- callback interval
-		- number of samples in the effects record
+#ifdef __AVR_ATmega328P__
+	#define		EEPROM_SIZE		1024
+#endif
 
-	Event entry will contain:
-		- the sample to play (by index)
-		- the delay to the next sample
-		- the next sample (by index)
-	*/
+/*
+typedef struct
+{
+	uint8_t		RecordType;
+	uint8_t		Count;
+	uint16_t	Delay;
+} EVENT_HEADER;
 
-	#ifdef __AVR_ATmega328P__
-		#define		EEPROM_SIZE		1024
-	#endif
+typedef struct 
+{
+	uint8_t		ItemIndex;
+} EVENT_ENTRY;
+*/
 
-	/*
-	typedef struct
-	{
-		uint8_t		RecordType;
-		uint8_t		Count;
-		uint16_t	Delay;
-	} EVENT_HEADER;
+void efx_renderAudioData(void);
 
-	typedef struct 
-	{
-		uint8_t		ItemIndex;
-	} EVENT_ENTRY;
-	*/
+int efx_init(Events* events);
 
-	SoundEffects(Events* events);
-	int init(void);
-	void on(void);
-	void off(void);
-	uint8_t playing(void);
-	void startSample(uint8_t index);
-	void playAmbient(void);
-	void playBackground(void);
-	void playSequence(void);
+void efx_on(void);
+void efx_off(void);
+uint8_t efx_playing(void);
+void efx_startSample(uint8_t index);
+void efx_playAmbient(eventState_t state);
+void efx_playBackground(eventState_t state);
+void efx_playSequence(eventState_t state);
 
-	void startSampleComplete(uint8_t result);
-	void sampleCallback(void);
-	void readComplete(uint8_t sfxdata);
-
-private:
-	Events *       _events;
-	SOUND_HEADER   _header;
-	uint8_t        _sample;
-	uint8_t	       _ambient;
-	uint32_t       _length;
-	uint8_t        _playState;
-	uint16_t       _ambientPos;
-	uint8_t        _ambientDelay;
-	uint8_t        _onoff;
-
-
-	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-	// Fills the header object with data
-	void fillHeader(void)
-	{
-		// load the header into the header struct
-		memset(&_header, 0, sizeof(SOUND_HEADER));
-		ee_readBytes(0, &_header, 254);
-		i2cSendStop();
-		if (0xFFFF == _header.samples)
-		{
-			_header.samples = 0;
-		}
-	}
-};
-
+void efx_startSampleComplete(uint8_t result);
+void efx_sampleCallback(void);
+void efx_readComplete(uint8_t sfxdata);
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
