@@ -15,7 +15,6 @@ RingBuffer uart_rx_buff(uart_buffer, UART_RX_BUFFER / sizeof(char));
 Uart				uart(&uart_rx_buff);
 Events				events(MAX_EVENT_RECORDS);
 Sermem				sermem(&uart, scratch, sizeof(scratch) / sizeof(char));
-SoundEffects		effects(&events);
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -46,7 +45,7 @@ static void checkButton(eventState_t state)
 	//TODO: Button debounce
 
 	// shutdown the CPU and all effects
-	effects.off();
+	efx_off();
 
 	// shutoff the LEDs
 	dbg_led_off();
@@ -67,7 +66,7 @@ static void checkButton(eventState_t state)
 	events.registerOneShot(enableButton, 8000, EVENT_STATE_NONE);
 
 	// wake back up
-	effects.on();
+	efx_on();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,7 +78,7 @@ static void processCommRequest(void)
 		return;
 
 	// shutoff effects while processing request
-	effects.off();
+	efx_off();
 
 	switch (data & 0x5F)
 	{
@@ -92,7 +91,7 @@ static void processCommRequest(void)
 			break;
 	}
 
-	effects.on();
+	efx_on();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -100,9 +99,8 @@ static void processCommRequest(void)
 void initEffects(void)
 {
 	// initialize effects
-	char msg[32];
 	uart.write_P(PSTR("Initializing effects header\r\n"));
-	int samples = effects.init();
+	int samples = efx_init(&events);
 	int len = sprintf_P(scratch, PSTR("  Found %d samples on the EEPROM\r\n"), samples);
 	uart.write(scratch, len);
 }
@@ -145,7 +143,7 @@ void init(void)
 
 	events.registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
 	events.registerEvent(readNextStatusVal, 1000, EVENT_STATE_NONE);
-	//events.registerHighPriorityEvent(showSerialStatusCallback, 100, EVENT_STATE_NONE);
+	events.registerHighPriorityEvent(showSerialStatusCallback, 100, EVENT_STATE_NONE);
 
 	// enable all interrupts
 	sei();
@@ -162,8 +160,8 @@ int main()
 
 	initEffects();
 
-	effects.on();
-	effects.startSample(SFX_EFX_OPENING);
+	efx_on();
+	efx_startSample(SFX_EFX_OPENING);
 
 	while(1)
 	{
@@ -179,6 +177,9 @@ int main()
 // Should be running @ 8.000kHz - this is the event sync driver method
 ISR(TIMER1_COMPA_vect)
 {
+	// play audio data
+	efx_renderAudioData();
+
 	// trigger event cycle
 	events.sync();
 }
@@ -214,19 +215,4 @@ ISR(USART_TX_vect)
 	showSerialStatus();
 
 	uart.transmitHandler();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Callback handler for the read complete event
-void Effects_readCompleteHandler(uint8_t data)
-{
-	// pass the received data to the Effects core
-	effects.readComplete(data);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Effects_startSampleCompleteHandler(uint8_t result)
-{
-	// Signal the result of the start sample request
-	effects.startSampleComplete(result);
 }
