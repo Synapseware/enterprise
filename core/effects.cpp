@@ -5,10 +5,8 @@
 static Events *       _events;
 static SOUND_HEADER   _header;
 static uint8_t        _sample;
-static uint8_t	       _ambient;
 static uint32_t       _length;
 static uint8_t        _playState;
-static uint16_t       _ambientPos;
 static uint8_t        _onoff;
 
 
@@ -31,19 +29,21 @@ static void fillHeader(void)
 // Runs on the 8kHz event handler to play back PWM audio!
 void efx_renderAudioData(void)
 {
+	static uint16_t ambientPos = 0;
+
 	// don't do anything if sound-effects are not enabled
 	if (SFX_ON != _onoff)
 		return;
 
 	// read next background sound sample value from PGM mem
-	_ambient = pgm_read_byte(&AMBIENT_SOUND[_ambientPos++]);
-	if (_ambientPos > AMBIENT_LEN - 1)
-		_ambientPos = 0;
+	uint8_t ambient = pgm_read_byte(&AMBIENT_SOUND[ambientPos++]);
+	if (ambientPos > AMBIENT_LEN - 1)
+		ambientPos = 0;
 
 	// just play the background sound if there's no SFX sample
 	if (SAMPLE_PLAYING != _playState || 0 == _header.samples)
 	{
-		OCR2B = _ambient;
+		OCR2B = ambient;
 		return;
 	}
 
@@ -59,8 +59,6 @@ void efx_renderAudioData(void)
 		{
 			_playState = SAMPLE_NONE;
 		}
-
-		OCR2B = ((uint16_t)_sample + (uint16_t)_ambient) >> 1;
 	}
 	else
 	{
@@ -70,15 +68,15 @@ void efx_renderAudioData(void)
 		ee_readA(&efx_readComplete);
 	}
 
+	// take the average of the sample and the ambient effects
+	OCR2B = ((uint16_t)_sample + (uint16_t)ambient) >> 1;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 void efx_readComplete(uint8_t sfxdata)
 {
-	_sample = sfxdata;
 
-	// take the average of the sample and the ambient effects
-	OCR2B = ((uint16_t)_sample + (uint16_t)_ambient) >> 1;
+	_sample = sfxdata;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -402,8 +400,6 @@ int efx_init(Events* events)
 {
 	_events				= events;
 	_sample		 		= 0;
-	_ambient			= 0;
-	_ambientPos			= 0;
 	_length		 		= 0;
 	_playState	  		= 0;
 	_onoff				= 0;
