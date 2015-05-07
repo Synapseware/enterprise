@@ -24,6 +24,8 @@ static const uint8_t	SAMPLE_NONE			= 0x00;
 static const uint8_t	SFX_OFF				= 0x00;
 static const uint8_t	SFX_ON				= 0xFF;
 
+static const uint8_t	SFX_RESULT_SUCCESS	= 0;
+
 static const uint16_t   effectsStart		= 0x00;	 // start address of effects records in EEPROM
 
 static const uint8_t	RT_NULL				= 0xFF;	 // null record

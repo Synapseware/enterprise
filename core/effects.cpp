@@ -41,14 +41,21 @@ void efx_renderAudioData(void)
 		ambientPos = 0;
 
 	// just play the background sound if there's no SFX sample
-	if (SAMPLE_PLAYING != _playState || 0 == _header.samples)
+	if (SAMPLE_PLAYING != _playState)
 	{
 		OCR2B = ambient;
 		return;
 	}
 
 	// determine sample state & ambient mix-in
-	if (0 == _length)
+	if (_length)
+	{
+		_length--;
+
+		// read the next sample value as long as we have data to read
+		ee_readA(&efx_readComplete);
+	}
+	else
 	{
 		// ramp down
 		if (_sample < 128)
@@ -59,13 +66,6 @@ void efx_renderAudioData(void)
 		{
 			_playState = SAMPLE_NONE;
 		}
-	}
-	else
-	{
-		_length--;
-
-		// read the next sample value as long as we have data to read
-		ee_readA(&efx_readComplete);
 	}
 
 	// take the average of the sample and the ambient effects
@@ -124,7 +124,7 @@ void efx_startSample(uint8_t index)
 // starts playback of a sample based on it's signature
 void efx_startSampleComplete(uint8_t result)
 {
-	if (0 == result)
+	if (SFX_RESULT_SUCCESS == result)
 	{
 		_playState = SAMPLE_PLAYING;
 		play_led_on();
