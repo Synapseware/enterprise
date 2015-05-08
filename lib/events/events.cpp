@@ -130,6 +130,7 @@ void Events::doEvents(void)
 }
 
 
+// --------------------------------------------------------------------------------
 uint16_t Events::fixInterval(uint16_t interval)
 {
 	while (interval > _timeBase && _timeBase > 0)
