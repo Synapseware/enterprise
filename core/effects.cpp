@@ -37,6 +37,7 @@ static void fillHeader(void)
 // callback - writes the data to the buffer
 void efx_readComplete(uint8_t sfxdata)
 {
+	// save the retrieved data in the buffer
 	sfx_buffer.Put(sfxdata);
 }
 
@@ -65,6 +66,7 @@ uint8_t efx_read_next(void)
 		_events->registerOneShot(efx_fill_buffer, 0, 0);
 	}
 
+	_length--;
 	return (uint8_t) data;
 }
 
@@ -94,10 +96,7 @@ void efx_renderAudioData(void)
 	// determine sample state & ambient mix-in
 	if (_length && !sfx_buffer.IsEmpty())
 	{
-		_length--;
-
 		// read the next sample value as long as we have data to read
-		//ee_readA(&efx_readComplete);
 		sample = efx_read_next();
 	}
 	else
@@ -157,7 +156,8 @@ void efx_startSample(uint8_t index)
 	_length	= _header.effects[index].length;
 	ee_setpageA(_header.effects[index].startPage, &efx_startSampleComplete);
 
-	efx_fill_buffer(0);
+	// fill the first block of data
+	_events->registerOneShot(efx_fill_buffer, 0, 0);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
