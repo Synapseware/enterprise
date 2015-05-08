@@ -2,6 +2,14 @@
 
 
 
+// the SFX buffer has a base size + an overhead size.  The idea is that
+// the sound data will never entirely drain (unless it's at the end)
+// so that the data can be constantly read without needing to time the
+// buffer running empty and getting refilled
+static const uint8_t BUFFER_OVERHEAD = 10;
+static char sound_buffer_raw[64 + BUFFER_OVERHEAD];
+static RingBuffer sfx_buffer(sound_buffer_raw, sizeof(sound_buffer_raw)/ sizeof(char));
+
 static Events *       _events;
 static SOUND_HEADER   _header;
 static uint8_t        _sample;
@@ -26,10 +34,46 @@ static void fillHeader(void)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// callback - writes the data to the buffer
+void efx_readComplete(uint8_t sfxdata)
+{
+	sfx_buffer.Put(sfxdata);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// fills the ring buffer by loading 
+void efx_fill_buffer(eventState_t state)
+{
+	uint8_t fillCount = (sizeof(sound_buffer_raw) / sizeof(char)) - BUFFER_OVERHEAD;
+	while (fillCount-- && _length--)
+	{
+		ee_readA(&efx_readComplete);
+	}
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// reads the next byte of data from the ring buffer, and queues a fill
+// operation if the buffer is low
+uint8_t efx_read_next(void)
+{
+	int data = sfx_buffer.Get();
+	if (sfx_buffer.Count() < BUFFER_OVERHEAD)
+	{
+		// queue another SFX block download
+		_events->registerOneShot(efx_fill_buffer, 0, 0);
+	}
+
+	return (uint8_t) data;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Runs on the 8kHz event handler to play back PWM audio!
 void efx_renderAudioData(void)
 {
-	static uint16_t ambientPos = 0;
+	static uint16_t	ambientPos	= 0;
+	static uint8_t	sample		= 0;
 
 	// don't do anything if sound-effects are not enabled
 	if (SFX_ON != _onoff)
@@ -48,20 +92,21 @@ void efx_renderAudioData(void)
 	}
 
 	// determine sample state & ambient mix-in
-	if (_length)
+	if (_length && !sfx_buffer.IsEmpty())
 	{
 		_length--;
 
 		// read the next sample value as long as we have data to read
-		ee_readA(&efx_readComplete);
+		//ee_readA(&efx_readComplete);
+		sample = efx_read_next();
 	}
 	else
 	{
 		// ramp down
-		if (_sample < 128)
-			_sample++;
-		else if (_sample > 128)
-			_sample--;
+		if (sample < 128)
+			sample++;
+		else if (sample > 128)
+			sample--;
 		else
 		{
 			_playState = SAMPLE_NONE;
@@ -69,14 +114,7 @@ void efx_renderAudioData(void)
 	}
 
 	// take the average of the sample and the ambient effects
-	OCR2B = ((uint16_t)_sample + (uint16_t)ambient) >> 1;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-void efx_readComplete(uint8_t sfxdata)
-{
-
-	_sample = sfxdata;
+	OCR2B = ((uint16_t)sample + (uint16_t)ambient) >> 1;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -118,6 +156,8 @@ void efx_startSample(uint8_t index)
 	_playState = SAMPLE_LOADING;
 	_length	= _header.effects[index].length;
 	ee_setpageA(_header.effects[index].startPage, &efx_startSampleComplete);
+
+	efx_fill_buffer(0);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -

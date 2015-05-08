@@ -10,6 +10,7 @@
 #include <events/events.h>
 #include <uart/uart.h>
 #include <at24c/at24c.h>
+#include <collections/ringbuffer.h>
 
 #include "board.h"
 #include "enterprise.h"
