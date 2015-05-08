@@ -179,6 +179,8 @@ int main()
 // Should be running @ 8.000kHz - this is the event sync driver method
 ISR(TIMER1_COMPA_vect)
 {
+	effects.renderAudioData();
+
 	// trigger event cycle
 	events.sync();
 }

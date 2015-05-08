@@ -124,8 +124,9 @@ public:
 	void playBackground(void);
 	void playSequence(void);
 
+	void renderAudioData(void);
+
 	void startSampleComplete(uint8_t result);
-	void sampleCallback(void);
 	void readComplete(uint8_t sfxdata);
 
 private:

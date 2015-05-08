@@ -4,15 +4,6 @@
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// This callback is used to dump the next value into the PWM stream
-static void sampleCallbackHandler(eventState_t state)
-{
-	if (0 == state)
-		return;
-
-	SoundEffects * effects = (SoundEffects*)state;
-	effects->sampleCallback();
-}
 static void playAmbientHandler(eventState_t state)
 {
 	if (0 == state)
@@ -53,7 +44,7 @@ SoundEffects::SoundEffects(Events* events)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Runs on the 8kHz event handler to play back PWM audio!
-void SoundEffects::sampleCallback(void)
+void SoundEffects::renderAudioData(void)
 {
 	// don't do anything if sound-effects are not enabled
 	if (SFX_ON != _onoff)
@@ -443,7 +434,7 @@ int SoundEffects::init(void)
 	fillHeader();
 
 	// this handler renders the audio data to the PWM pin
-	_events->registerEvent(sampleCallbackHandler, 0, this);
+	//_events->registerEvent(sampleCallbackHandler, 0, this);
 	if (_header.samples > 0)
 	{
 		_events->registerEvent(playAmbientHandler, 2650, this);		// plays random ambient sounds
