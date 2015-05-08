@@ -124,10 +124,6 @@ void efx_playAmbient(eventState_t state);
 void efx_playBackground(eventState_t state);
 void efx_playSequence(eventState_t state);
 
-void efx_startSampleComplete(uint8_t result);
-void efx_sampleCallback(void);
-void efx_readComplete(uint8_t sfxdata);
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // ambient sounds
