@@ -423,8 +423,8 @@ int efx_init(Events* events)
 	// load the header data
 	fillHeader();
 
-	// this handler renders the audio data to the PWM pin
-	//_events->registerEvent(efx_renderAudioData, 0, 0);
+
+	// register SFX handlers if there's valid data
 	if (_header.samples > 0)
 	{
 		_events->registerEvent(efx_playAmbient, 22500, 0);		// plays random ambient sounds

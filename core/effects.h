@@ -63,6 +63,8 @@ typedef struct
 	SOUND_EFFECT      effects[42];          // + 2	// array of sound effects
 } SOUND_HEADER;                    			// 2 + 42 * 6 bytes = 254 bytes
 
+	void renderAudioData(void);
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Sound effects methods
