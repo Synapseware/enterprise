@@ -22,11 +22,14 @@ Critical TWI/I2C events are:
 
 
 #if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__) || defined (__AVR_ATmega168__) || defined (__AVR_ATmega88__) || defined (__AVR_ATmega48__)
+	#define TWI_PORT			PORTC
+	#define TWI_DDR				DDRC
 	#define TWI_SDA				PC4
 	#define TWI_SCL				PC5
 #else
 	#warning "Unsupported MCU!  I2C can't be configured.  Results unpredicatable."
 #endif
+
 
 #if defined (TWI_LED_PIN) && defined (TWI_LED_PORT) && defined (TWI_LED_DDR)
 	#define twi_led_en()		TWI_LED_DDR |= (1<<TWI_LED_PIN)
