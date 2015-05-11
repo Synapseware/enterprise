@@ -63,69 +63,15 @@ typedef struct
 	SOUND_EFFECT      effects[42];          // + 2	// array of sound effects
 } SOUND_HEADER;                    			// 2 + 42 * 6 bytes = 254 bytes
 
-/*
-Event entry will contain:
-	- the sample to play (by index)
-	- the delay to the next sample
-	- the next sample (by index)
-*/
 
-/*
-Dynamic events require a few things...
-- a playback function
-	are we playing back a random event?
-	a fixed event?
-	a sound event?
-	a lighting event?
-	a motion event?
-- an event schedule (done, events.c)
-- storage (done, EEPROM)
-- generic playback event
-
-Event header "records" will require:
-	- record type (sound, light, motion)
-	- callback interval
-	- number of samples in the effects record
-
-Event entry will contain:
-	- the sample to play (by index)
-	- the delay to the next sample
-	- the next sample (by index)
-*/
-
-#ifdef __AVR_ATmega328P__
-	#define		EEPROM_SIZE		1024
-#endif
-
-/*
-typedef struct
-{
-	uint8_t		RecordType;
-	uint8_t		Count;
-	uint16_t	Delay;
-} EVENT_HEADER;
-
-typedef struct 
-{
-	uint8_t		ItemIndex;
-} EVENT_ENTRY;
-*/
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Sound effects methods
 void efx_renderAudioData(void);
-
 int efx_init(Events* events);
-
 void efx_on(void);
 void efx_off(void);
 uint8_t efx_playing(void);
 void efx_startSample(uint8_t index);
-void efx_playAmbient(eventState_t state);
-void efx_playBackground(eventState_t state);
-void efx_playSequence(eventState_t state);
-
-void efx_startSampleComplete(uint8_t result);
-void efx_sampleCallback(void);
-void efx_readComplete(uint8_t sfxdata);
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -

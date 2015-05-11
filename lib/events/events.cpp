@@ -131,18 +131,6 @@ void Events::doEvents(void)
 
 
 // --------------------------------------------------------------------------------
-uint16_t Events::fixInterval(uint16_t interval)
-{
-	while (interval > _timeBase && _timeBase > 0)
-	{
-		interval -= _timeBase;
-	}
-
-	return interval;
-}
-
-
-// --------------------------------------------------------------------------------
 // Register a normal priority event
 void Events::registerEvent(fEventCallback fptr, uint16_t interval, eventState_t state)
 {
@@ -150,7 +138,7 @@ void Events::registerEvent(fEventCallback fptr, uint16_t interval, eventState_t 
 		return;
 
 	_events[_total].flags		= (1<<EVENT_FLAG_REPEATING);
-	_events[_total].interval	= fixInterval(interval);
+	_events[_total].interval	= interval;
 	_events[_total].next		= interval;
 	_events[_total].func		= fptr;
 	_events[_total].state		= state;
@@ -168,7 +156,7 @@ void Events::registerHighPriorityEvent(fEventCallback fptr, uint16_t interval, e
 		return;
 
 	_events[_total].flags		= (1<<EVENT_FLAG_REPEATING) | (1<<EVENT_PRIORITY_HIGH);
-	_events[_total].interval	= fixInterval(interval);
+	_events[_total].interval	= interval;
 	_events[_total].next		= interval;
 	_events[_total].func		= fptr;
 	_events[_total].state		= state;
@@ -185,7 +173,7 @@ void Events::registerOneShot(fEventCallback fptr, uint16_t interval, eventState_
 		return;
 
 	_events[_total].flags		= (1<<EVENT_FLAG_ONESHOT);
-	_events[_total].interval	= fixInterval(interval);
+	_events[_total].interval	= interval;
 	_events[_total].next		= interval;
 	_events[_total].func		= fptr;
 	_events[_total].state		= state;
@@ -210,6 +198,8 @@ void Events::eventsUnregisterEvent(fEventCallback fprt)
 // Unregisters all the events
 void Events::eventsUnregisterAll(void)
 {
+	_total = 0;
+
 	for (uint8_t i = 0; i < MAX_EVENT_RECORDS; i++)
 	{
 		_events[i].func			= 0;
@@ -218,6 +208,4 @@ void Events::eventsUnregisterAll(void)
 		_events[i].next			= 0;
 		_events[i].state		= 0;
 	}
-
-	_total = 0;
 }
