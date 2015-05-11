@@ -86,7 +86,6 @@ public:
 	void eventsUnregisterAll(void);
 
 private:
-	uint16_t fixInterval(uint16_t interval);
 	void removeEvent(uint8_t index);
 
 	event_t	*	_events;
