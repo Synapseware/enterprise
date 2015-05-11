@@ -72,6 +72,7 @@ void efx_renderAudioData(void)
 		else
 		{
 			_playState = SAMPLE_NONE;
+			play_led_off();
 		}
 	}
 
@@ -428,7 +429,7 @@ int efx_init(Events* events)
 	if (_header.samples > 0)
 	{
 		_events->registerEvent(efx_playAmbient, 22500, 0);		// plays random ambient sounds
-		_events->registerEvent(efx_playSequence, 45000, 0);		// plays special sound sequences
+		_events->registerEvent(efx_playSequence, 10000, 0);		// plays special sound sequences
 		_events->registerEvent(efx_playBackground, 38000, 0);	// plays random background sounds
 	}
 

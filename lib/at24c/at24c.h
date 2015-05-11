@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include <twi/i2c.h>
+#include <asyncTypes.h>
 
 #ifndef TWI_SPEED
 	#warning TWI_SPEED not defined.  Defaulting to 100kHz
@@ -50,9 +51,10 @@ extern "C" {
 #define ASYNC_MULTI_DEVICE		2
 #define ASYNC_MULTI_ADDRMSB		3
 #define ASYNC_MULTI_ADDRLSB		4
-#define ASYNC_MULTI_READ		5
-#define ASYNC_MULTI_NEXT		6
-#define ASYNC_MULTI_STOP		7
+#define ASYNC_MULIT_READ_START	5
+#define ASYNC_MULTI_READ		6
+#define ASYNC_MULTI_NEXT		7
+#define ASYNC_MULTI_STOP		8
 
 
 
@@ -71,7 +73,7 @@ EE_STATUS ee_readBytes(uint16_t page, void * data, int length);
 void ee_readBytesA(uint16_t page, void * data, int length, fStatusCallback callBack);
 
 EE_STATUS ee_writePage(uint16_t page, void * data);
-EE_STATUS ee_writeBytes(uint16_t address, void * data, int length);
+EE_STATUS ee_writeBytes(uint16_t page, void * data, int length);
 
 EE_STATUS ee_putByteStart(uint16_t page);
 void ee_putByte(uint8_t data);

@@ -25,6 +25,13 @@
 
 //----------------------------------------------------------------------------------------------
 // LED1 - TWI constants and LED
+//#define TWI_LED_DDR			DDRC
+//#define TWI_LED_PORT		PORTC
+//#define TWI_LED_PIN			PORTC0
+
+#define twi_led_en()		TWI_LED_DDR |= (1<<TWI_LED_PIN)
+#define twi_led_on()		TWI_LED_PORT &= ~(1<<TWI_LED_PIN)
+#define twi_led_off()		TWI_LED_PORT |= (1<<TWI_LED_PIN)
 
 
 //----------------------------------------------------------------------------------------------
@@ -33,9 +40,9 @@
 #define LED_PLAY_DDR		DDRC
 #define LED_PLAY_PIN		PORTC1
 
-#define play_led_off()		LED_PLAY_PORT |= (1<<LED_PLAY_PIN)
-#define play_led_on()		LED_PLAY_PORT &= ~(1<<LED_PLAY_PIN)
 #define play_led_en()		LED_PLAY_DDR |= (1<<LED_PLAY_PIN)
+#define play_led_on()		LED_PLAY_PORT &= ~(1<<LED_PLAY_PIN)
+#define play_led_off()		LED_PLAY_PORT |= (1<<LED_PLAY_PIN)
 
 
 //----------------------------------------------------------------------------------------------
@@ -44,9 +51,9 @@
 #define SERIAL_LED_DDR		DDRC
 #define SERIAL_LED_PIN		PORTC2
 
-#define serial_led_off()	SERIAL_LED_PORT |= (1<<SERIAL_LED_PIN)
-#define serial_led_on()		SERIAL_LED_PORT &= ~(1<<SERIAL_LED_PIN)
 #define serial_led_en()		SERIAL_LED_DDR |= (1<<SERIAL_LED_PIN)
+#define serial_led_on()		SERIAL_LED_PORT &= ~(1<<SERIAL_LED_PIN)
+#define serial_led_off()	SERIAL_LED_PORT |= (1<<SERIAL_LED_PIN)
 
 
 //----------------------------------------------------------------------------------------------
@@ -55,9 +62,9 @@
 #define LED_DBG_DDR			DDRC
 #define LED_DBG_LINE		PORTC3
 
-#define dbg_led_off()		LED_DBG_PORT |= (1<<LED_DBG_LINE)
-#define dbg_led_on()		LED_DBG_PORT &= ~(1<<LED_DBG_LINE)
 #define dbg_led_en()		LED_DBG_DDR |= (1<<LED_DBG_LINE)
+#define dbg_led_on()		LED_DBG_PORT &= ~(1<<LED_DBG_LINE)
+#define dbg_led_off()		LED_DBG_PORT |= (1<<LED_DBG_LINE)
 
 
 //----------------------------------------------------------------------------------------------
