@@ -2,14 +2,6 @@
 
 
 
-// the SFX buffer has a base size + an overhead size.  The idea is that
-// the sound data will never entirely drain (unless it's at the end)
-// so that the data can be constantly read without needing to time the
-// buffer running empty and getting refilled
-static const uint8_t BUFFER_OVERHEAD = 10;
-static char sound_buffer_raw[64 + BUFFER_OVERHEAD];
-static RingBuffer sfx_buffer(sound_buffer_raw, sizeof(sound_buffer_raw)/ sizeof(char));
-
 static Events *       _events;
 static SOUND_HEADER   _header;
 static uint8_t        _sample;
@@ -34,48 +26,10 @@ static void fillHeader(void)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// callback - writes the data to the buffer
-static void efx_readComplete(uint8_t sfxdata)
-{
-	// save the retrieved data in the buffer
-	sfx_buffer.Put(sfxdata);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// fills the ring buffer by loading 
-static void efx_fill_buffer(eventState_t state)
-{
-	uint8_t fillCount = (sizeof(sound_buffer_raw) / sizeof(char)) - BUFFER_OVERHEAD;
-	while (fillCount-- && _length--)
-	{
-		ee_readA(&efx_readComplete);
-	}
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// reads the next byte of data from the ring buffer, and queues a fill
-// operation if the buffer is low
-static uint8_t efx_read_next(void)
-{
-	int data = sfx_buffer.Get();
-	if (sfx_buffer.Count() < BUFFER_OVERHEAD)
-	{
-		// queue another SFX block download
-		_events->registerOneShot(efx_fill_buffer, 0, 0);
-	}
-
-	_length--;
-	return (uint8_t) data;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Runs on the 8kHz event handler to play back PWM audio!
 void efx_renderAudioData(void)
 {
-	static uint16_t	ambientPos	= 0;
-	static uint8_t	sample		= 0;
+	static uint16_t ambientPos = 0;
 
 	// don't do anything if sound-effects are not enabled
 	if (SFX_ON != _onoff)
@@ -94,18 +48,20 @@ void efx_renderAudioData(void)
 	}
 
 	// determine sample state & ambient mix-in
-	if (_length && !sfx_buffer.IsEmpty())
+	if (_length)
 	{
+		_length--;
+
 		// read the next sample value as long as we have data to read
-		sample = efx_read_next();
+		ee_readA(&efx_readComplete);
 	}
 	else
 	{
 		// ramp down
-		if (sample < 128)
-			sample++;
-		else if (sample > 128)
-			sample--;
+		if (_sample < 128)
+			_sample++;
+		else if (_sample > 128)
+			_sample--;
 		else
 		{
 			_playState = SAMPLE_NONE;
@@ -113,7 +69,14 @@ void efx_renderAudioData(void)
 	}
 
 	// take the average of the sample and the ambient effects
-	OCR2B = ((uint16_t)sample + (uint16_t)ambient) >> 1;
+	OCR2B = ((uint16_t)_sample + (uint16_t)ambient) >> 1;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+void efx_readComplete(uint8_t sfxdata)
+{
+
+	_sample = sfxdata;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -140,22 +103,6 @@ uint8_t efx_playing(void)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// starts playback of a sample based on it's signature
-void efx_startSampleComplete(uint8_t result)
-{
-	if (SFX_RESULT_SUCCESS == result)
-	{
-		_playState = SAMPLE_PLAYING;
-		play_led_on();
-	}
-	else
-	{
-		_playState = SAMPLE_NONE;
-		play_led_off();
-	}
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Starts playback for the specified sample, by index
 void efx_startSample(uint8_t index)
 {
@@ -171,9 +118,22 @@ void efx_startSample(uint8_t index)
 	_playState = SAMPLE_LOADING;
 	_length	= _header.effects[index].length;
 	ee_setpageA(_header.effects[index].startPage, &efx_startSampleComplete);
+}
 
-	// fill the first block of data
-	_events->registerOneShot(efx_fill_buffer, 0, 0);
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// starts playback of a sample based on it's signature
+void efx_startSampleComplete(uint8_t result)
+{
+	if (SFX_RESULT_SUCCESS == result)
+	{
+		_playState = SAMPLE_PLAYING;
+		play_led_on();
+	}
+	else
+	{
+		_playState = SAMPLE_NONE;
+		play_led_off();
+	}
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
@@ -464,10 +424,11 @@ int efx_init(Events* events)
 	fillHeader();
 
 	// this handler renders the audio data to the PWM pin
+	//_events->registerEvent(efx_renderAudioData, 0, 0);
 	if (_header.samples > 0)
 	{
-		_events->registerEvent(efx_playAmbient, 26500, 0);		// plays random ambient sounds
-		_events->registerEvent(efx_playSequence, 17000, 0);		// plays special sound sequences
+		_events->registerEvent(efx_playAmbient, 2650, 0);		// plays random ambient sounds
+		_events->registerEvent(efx_playSequence, 1000, 0);	// plays special sound sequences
 		_events->registerEvent(efx_playBackground, 28500, 0);	// plays random background sounds
 	}
 
