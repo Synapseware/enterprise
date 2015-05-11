@@ -109,13 +109,15 @@ void initEffects(void)
 // Initialize the hardware
 void init(void)
 {
-	play_led_en();
 	dbg_led_en();
 	serial_led_en();
+	play_led_en();
+	twi_led_en();
 
-	play_led_off();
 	dbg_led_off();
 	serial_led_off();
+	play_led_off();
+	twi_led_off();
 
 	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	// establish event timer & handler
@@ -142,8 +144,7 @@ void init(void)
 	PCICR			|= (1<<SWITCH_PCICR);
 
 	events.registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
-	events.registerEvent(readNextStatusVal, 1000, EVENT_STATE_NONE);
-	events.registerHighPriorityEvent(showSerialStatusCallback, 100, EVENT_STATE_NONE);
+	events.registerEvent(readNextStatusVal, 700, EVENT_STATE_NONE);
 
 	// enable all interrupts
 	sei();

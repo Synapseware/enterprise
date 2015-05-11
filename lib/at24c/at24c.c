@@ -250,21 +250,18 @@ uint8_t ee_read(void)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Initiates an async read operation
+// Performs an asynchronous read operation
 void ee_readAHandler(void)
 {
-	unsigned char status = i2cGetStatus();
+	unsigned char status = I2C_OK;
 	switch(_asyncStep)
 	{
 		// send a start signal
 		case ASYNC_NEXT_START:
-			_asyncStep = ASYNC_NEXT_DEVICE;
-			i2cSendStartAsync(ee_readAHandler);
-			return;
+			i2cSendStart();
+			i2cWaitForComplete();
 
-		// send SLA+R
-		case ASYNC_NEXT_DEVICE:
-			if (status != TW_START)
+			if (TW_START != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -276,19 +273,18 @@ void ee_readAHandler(void)
 
 		// setup TWI module to NACK the response
 		case ASYNC_NEXT_NACK:
-			if (status != TW_MR_SLA_ACK)
+			if (TW_MR_SLA_ACK != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
 			}
 
-			_asyncStep = ASYNC_NEXT_READ;
-			i2cNackA(ee_readAHandler);
-			return;
+			// it's more efficient to wait a little here than to
+			// process an async callback
+			i2cNack();
+			i2cWaitForComplete();
 
-		// capture the received data	
-		case ASYNC_NEXT_READ:
-			if (status != TW_MR_DATA_NACK)
+			if (TW_MR_DATA_NACK != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -308,6 +304,9 @@ void ee_readAHandler(void)
 			return;
 	}
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Initiates an async read operation
 void ee_readA(fStatusCallback callBack)
 {
 	if (_asyncStep != ASYNC_COMPLETE)
@@ -321,25 +320,22 @@ void ee_readA(fStatusCallback callBack)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Performs an asynchronous page read
+// Performs an asynchronous read operation
 void ee_readBytesHandler(void)
 {
 	// setting the current page in the device requires setting up the
 	// device for a 'write' operation, but aborting the write before
 	// sending any data to the chip.  a re-start is initiated with the
 	// device which starts the sequential read
-	unsigned char status = i2cGetStatus();
+	unsigned char status = I2C_OK;
 	switch (_asyncStep)
 	{
 		// send start signal
 		case ASYNC_MULTI_START:
-			_asyncStep = ASYNC_MULTI_DEVICE;
-			i2cSendStartAsync(ee_readBytesHandler);
-			return;
+			i2cSendStart();
+			i2cWaitForComplete();
 
-		// send device address with write
-		case ASYNC_MULTI_DEVICE:
-			if (status != TW_START)
+			if (TW_START != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -351,7 +347,7 @@ void ee_readBytesHandler(void)
 
 		// send address MSB
 		case ASYNC_MULTI_ADDRMSB:
-			if (status != TW_MT_SLA_ACK)
+			if (TW_MT_SLA_ACK != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -363,17 +359,26 @@ void ee_readBytesHandler(void)
 
 		// send address LSB
 		case ASYNC_MULTI_ADDRLSB:
-			if (status != TW_MT_DATA_ACK)
+			if (TW_MT_DATA_ACK != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
 			}
 
-			_asyncStep = ASYNC_MULTI_READ;
+			_asyncStep = ASYNC_MULIT_READ_START;
 			i2cSendByteAsync(_address & 0xff, ee_readBytesHandler);
 			return;
 
-		// prepare appropriate reply for recceived byte(s)
+		// restart and send READ request
+		case ASYNC_MULIT_READ_START:
+			i2cSendStart();
+			i2cWaitForComplete();
+
+			_asyncStep = ASYNC_MULTI_NEXT;
+			i2cSendByteAsync(_device & I2C_READ, ee_readBytesHandler);
+			return;
+
+		// prepare appropriate reply for received byte(s)
 		case ASYNC_MULTI_READ:
 			_asyncStep = ASYNC_MULTI_NEXT;
 			if (_bufferLen)
@@ -399,7 +404,7 @@ void ee_readBytesHandler(void)
 
 		// end the transaction
 		case ASYNC_MULTI_STOP:
-			if (status != TW_MT_DATA_ACK)
+			if (TW_MT_DATA_ACK != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -410,22 +415,6 @@ void ee_readBytesHandler(void)
 			_eeComplete(0);
 			return;
 	}
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// reads the specified page of data from the eeprom chip
-EE_STATUS ee_readBytes(uint16_t page, void * data, int length)
-{
-	EE_STATUS status = __writeActiveAddress(page);
-	if (I2C_OK != status)
-		return status;
-
-	// perform block read
-	status = i2cMasterReceiveNI(AT24C1024_ADDRESS, data, length);
-	if (I2C_OK != status)
-		return status;
-
-	return I2C_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -442,6 +431,22 @@ void ee_readBytesA(uint16_t page, void * data, int length, fStatusCallback callB
 	_asyncStep		= ASYNC_MULTI_START;
 
 	ee_readBytesHandler();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// reads the specified page of data from the eeprom chip
+EE_STATUS ee_readBytes(uint16_t page, void * data, int length)
+{
+	EE_STATUS status = __writeActiveAddress(page);
+	if (I2C_OK != status)
+		return status;
+
+	// perform block read
+	status = i2cMasterReceiveNI(AT24C1024_ADDRESS, data, length);
+	if (I2C_OK != status)
+		return status;
+
+	return I2C_OK;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -463,11 +468,11 @@ EE_STATUS ee_writePage(uint16_t page, void * data)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Writes an arbitrary block of data to the EEPROM.
-EE_STATUS ee_writeBytes(uint16_t address, void * data, int length)
+// Writes an arbitrary block of data to the EEPROM, starting at the given page
+EE_STATUS ee_writeBytes(uint16_t page, void * data, int length)
 {
 	// initiate a page write sequence
-	EE_STATUS status = __writeActiveAddress(address);
+	EE_STATUS status = __writeActiveAddress(page);
 	if (status != I2C_OK)
 		return status;
 
@@ -489,8 +494,8 @@ EE_STATUS ee_putByteStart(uint16_t page)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Writes a byte of data to the current page.  Meant to be called once a call to
-// ee_setpage has taken place.
+// Writes a byte of data to the current page.  Meant to be called
+// once a call to ee_setpage has taken place.
 void ee_putByte(uint8_t data)
 {
 	// send the byte
