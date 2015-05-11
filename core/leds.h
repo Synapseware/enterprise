@@ -8,9 +8,11 @@
 #include <events/events.h>
 #include "board.h"
 
+
+void showSerialStatus(void);
 void fadeStatusLed(eventState_t state);
 void readNextStatusVal(eventState_t state);
 void showSerialStatusCallback(eventState_t state);
-void showSerialStatus(void);
+
 
 #endif
