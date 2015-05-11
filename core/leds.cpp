@@ -1,24 +1,35 @@
 #include "leds.h"
 
-const static uint8_t SLEEPY_EYES[] PROGMEM = {
+static const uint8_t SLEEPY_EYES[] PROGMEM = {
 	3, 3, 7, 12, 19, 22, 31, 63, 127, 63, 31, 22, 19, 12, 7, 3, 3, 3, 3, 3, 3
 };
-const uint8_t SLEEPY_EYES_LEN = sizeof(SLEEPY_EYES)/sizeof(uint8_t);
+static const uint8_t SLEEPY_EYES_LEN = sizeof(SLEEPY_EYES)/sizeof(uint8_t);
 
+// decay data
+static uint8_t _decay_serial		= 0;
+
+// Decay the LED on times
+void decayLeds(void)
+{
+	if (_decay_serial > 0)
+		_decay_serial--;
+	else
+		serial_led_off();
+}
 
 //----------------------------------------------------------------------------------------------
 // Shows the heart-beat pattern on the debug LED
 static uint8_t _val = 0;
 void fadeStatusLed(eventState_t state)
 {
-	uint8_t _idx = 0;
+	static uint8_t level = 0;
 
-	if (0 == _val || _idx >= _val)
+	if (0 == _val || level >= _val)
 		dbg_led_off();
 	else
 		dbg_led_on();
 
-	_idx += 4;
+	level += 4;
 }
 void readNextStatusVal(eventState_t state)
 {
@@ -26,23 +37,14 @@ void readNextStatusVal(eventState_t state)
 	_val = pgm_read_byte(&SLEEPY_EYES[idx++]);
 	if (idx >= SLEEPY_EYES_LEN)
 		idx = 0;
+
+	decayLeds();
 }
 
 //----------------------------------------------------------------------------------------------
-// Used to show activity across the serial port
-static uint8_t decay = 0;
-void showSerialStatusCallback(eventState_t state)
-{
-	if (decay > 0)
-	{
-		decay--;
-		return;
-	}
-
-	serial_led_off();
-}
+// Turns on the serial status LED
 void showSerialStatus(void)
 {
-	decay = 4;
+	_decay_serial = 10;
 	serial_led_on();
 }

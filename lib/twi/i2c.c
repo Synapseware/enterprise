@@ -2,7 +2,7 @@
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-volatile fVoidCallback i2c_callBack = 0;
+static fVoidCallback i2c_callBack	= 0;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ISR(TWI_vect)
@@ -22,6 +22,8 @@ inline void i2cSendStart(void)
 }
 inline void i2cSendStartAsync(fVoidCallback cb)
 {
+	twi_led_on();
+
 	i2c_callBack = cb;
 	TWCR = TWI_START | (1<<TWIE);
 }
@@ -38,20 +40,18 @@ inline void i2cWaitForComplete(void)
 {
 	// wait for i2c interface to complete operation
     while (!(TWCR & (1<<TWINT)));
-
-	twi_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline void i2cSendByte(uint8_t data)
 {
-	twi_led_on();
 	TWDR = data;
 	TWCR = TWI_SEND;
 }
 inline void i2cSendByteAsync(uint8_t data, fVoidCallback cb)
 {
 	twi_led_on();
+
 	i2c_callBack = cb;
 	TWDR = data;
 	TWCR = TWI_SEND | (1<<TWIE);
@@ -64,6 +64,8 @@ inline void i2cAck(void)
 }
 void i2cAckA(fVoidCallback cb)
 {
+	twi_led_on();
+
 	i2c_callBack = cb;
 	TWCR = TWI_ACK | (1<<TWIE);
 }
@@ -75,6 +77,8 @@ inline void i2cNack(void)
 }
 void i2cNackA(fVoidCallback cb)
 {
+	twi_led_on();
+
 	i2c_callBack = cb;
 	TWCR = TWI_NACK | (1<<TWIE);
 }
@@ -98,6 +102,8 @@ inline EE_STATUS i2cGetStatus(void)
 // Sends the specified value, repeat count times
 void i2cMasterRawWriteRepeat(uint16_t count, uint8_t value)
 {
+	twi_led_on();
+
 	// send data
 	while (count > 0)
 	{
@@ -105,12 +111,16 @@ void i2cMasterRawWriteRepeat(uint16_t count, uint8_t value)
 		i2cWaitForComplete();
 		count--;
 	}
+
+	twi_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Sends a block of raw-data over the TWI interface
 void i2cMasterRawWrite(uint16_t length, uint8_t * data)
 {
+	twi_led_on();
+
 	// send data
 	while (length > 0)
 	{
@@ -118,12 +128,16 @@ void i2cMasterRawWrite(uint16_t length, uint8_t * data)
 		i2cWaitForComplete();
 		length--;
 	}
+
+	twi_led_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Sends a block of data without a trailing stop
 EE_STATUS i2cMasterSendNoStopNI(uint8_t deviceAddr, uint16_t length, uint8_t * data)
 {
+	twi_led_on();
+
 	// send start condition
 	i2cSendStart();
     i2cWaitForComplete();
@@ -140,6 +154,8 @@ EE_STATUS i2cMasterSendNoStopNI(uint8_t deviceAddr, uint16_t length, uint8_t * d
 		return I2C_ERROR_NODEV;
 
 	i2cMasterRawWrite(length, data);
+
+	twi_led_off();
 
 	return I2C_OK;
 }
@@ -177,8 +193,8 @@ EE_STATUS i2cMasterReceiveNI(unsigned char deviceAddr, void * data, int length)
 	// return error
 	if (i2cGetStatus() != TW_MR_SLA_ACK)
 	{
-		i2cSendStop();
 		twi_led_off();
+		i2cSendStop();
 		return I2C_ERROR_NODEV;
 	}
 
@@ -204,6 +220,7 @@ EE_STATUS i2cMasterReceiveNI(unsigned char deviceAddr, void * data, int length)
 	// transmit stop condition
 	i2cWaitForComplete();
 	i2cSendStop();
+
 	twi_led_off();
 
 	return I2C_OK;
@@ -212,14 +229,14 @@ EE_STATUS i2cMasterReceiveNI(unsigned char deviceAddr, void * data, int length)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void i2cInit(unsigned short bitrateKHz)
 {
-	// bring pins high
-	PORTC |= (1<<TWI_SDA) | (1<<TWI_SCL);
-
-	// set pins as output
-	DDRC |= (1<<TWI_SDA) | (1<<TWI_SCL);
-
 	twi_led_en();
 	twi_led_off();
+
+	// bring pins high
+	TWI_PORT |= (1<<TWI_SDA) | (1<<TWI_SCL);
+
+	// set pins as output
+	TWI_DDR |= (1<<TWI_SDA) | (1<<TWI_SCL);
 
 	// set i2c bitrate
 	// SCL freq = F_CPU/(16+2*TWBR)) (prescaler = 1)

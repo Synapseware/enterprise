@@ -253,18 +253,15 @@ uint8_t ee_read(void)
 // Initiates an async read operation
 void ee_readAHandler(void)
 {
-	unsigned char status = i2cGetStatus();
+	unsigned char status = I2C_OK;
 	switch(_asyncStep)
 	{
 		// send a start signal
 		case ASYNC_NEXT_START:
-			_asyncStep = ASYNC_NEXT_DEVICE;
-			i2cSendStartAsync(ee_readAHandler);
-			return;
+			i2cSendStart();
+			i2cWaitForComplete();
 
-		// send SLA+R
-		case ASYNC_NEXT_DEVICE:
-			if (status != TW_START)
+			if (TW_START != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -276,7 +273,7 @@ void ee_readAHandler(void)
 
 		// setup TWI module to NACK the response
 		case ASYNC_NEXT_NACK:
-			if (status != TW_MR_SLA_ACK)
+			if (TW_MR_SLA_ACK != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -288,7 +285,7 @@ void ee_readAHandler(void)
 
 		// capture the received data	
 		case ASYNC_NEXT_READ:
-			if (status != TW_MR_DATA_NACK)
+			if (TW_MR_DATA_NACK != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -328,18 +325,15 @@ void ee_readBytesHandler(void)
 	// device for a 'write' operation, but aborting the write before
 	// sending any data to the chip.  a re-start is initiated with the
 	// device which starts the sequential read
-	unsigned char status = i2cGetStatus();
+	unsigned char status = I2C_OK;
 	switch (_asyncStep)
 	{
 		// send start signal
 		case ASYNC_MULTI_START:
-			_asyncStep = ASYNC_MULTI_DEVICE;
-			i2cSendStartAsync(ee_readBytesHandler);
-			return;
+			i2cSendStart();
+			i2cWaitForComplete();
 
-		// send device address with write
-		case ASYNC_MULTI_DEVICE:
-			if (status != TW_START)
+			if (TW_START != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -351,7 +345,7 @@ void ee_readBytesHandler(void)
 
 		// send address MSB
 		case ASYNC_MULTI_ADDRMSB:
-			if (status != TW_MT_SLA_ACK)
+			if (TW_MT_SLA_ACK != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -363,7 +357,7 @@ void ee_readBytesHandler(void)
 
 		// send address LSB
 		case ASYNC_MULTI_ADDRLSB:
-			if (status != TW_MT_DATA_ACK)
+			if (TW_MT_DATA_ACK != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;
@@ -399,7 +393,7 @@ void ee_readBytesHandler(void)
 
 		// end the transaction
 		case ASYNC_MULTI_STOP:
-			if (status != TW_MT_DATA_ACK)
+			if (TW_MT_DATA_ACK != (status = i2cGetStatus()))
 			{
 				_asyncError(status);
 				return;

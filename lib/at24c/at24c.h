@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include <twi/i2c.h>
+#include <asyncTypes.h>
 
 #ifndef TWI_SPEED
 	#warning TWI_SPEED not defined.  Defaulting to 100kHz
