@@ -259,14 +259,11 @@ void ee_readAHandler(void)
 		// send a start signal
 		case ASYNC_NEXT_START:
 			_asyncStep = ASYNC_NEXT_DEVICE;
-			//i2cSendStartAsync(ee_readAHandler);
-			i2cSendStart();
-			i2cWaitForComplete();
-			status = i2cGetStatus();
-			//return;
+			i2cSendStartAsync(ee_readAHandler);
+			return;
 
 		// send SLA+R
-		//case ASYNC_NEXT_DEVICE:
+		case ASYNC_NEXT_DEVICE:
 			if (status != TW_START)
 			{
 				_asyncError(status);
@@ -286,14 +283,11 @@ void ee_readAHandler(void)
 			}
 
 			_asyncStep = ASYNC_NEXT_READ;
-			//i2cNackA(ee_readAHandler);
-			i2cNack();
-			i2cWaitForComplete();
-			status = i2cGetStatus();
-			//return;
+			i2cNackA(ee_readAHandler);
+			return;
 
 		// capture the received data	
-		//case ASYNC_NEXT_READ:
+		case ASYNC_NEXT_READ:
 			if (status != TW_MR_DATA_NACK)
 			{
 				_asyncError(status);
