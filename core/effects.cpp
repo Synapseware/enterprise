@@ -24,6 +24,13 @@ static void fillHeader(void)
 	}
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+static void efx_readComplete(uint8_t sfxdata)
+{
+
+	_sample = sfxdata;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Runs on the 8kHz event handler to play back PWM audio!
@@ -73,13 +80,6 @@ void efx_renderAudioData(void)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-void efx_readComplete(uint8_t sfxdata)
-{
-
-	_sample = sfxdata;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // enables all sound effects
 void efx_on(void)
 {
@@ -103,6 +103,22 @@ uint8_t efx_playing(void)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// starts playback of a sample based on it's signature
+static void efx_startSampleComplete(uint8_t result)
+{
+	if (SFX_RESULT_SUCCESS == result)
+	{
+		_playState = SAMPLE_PLAYING;
+		play_led_on();
+	}
+	else
+	{
+		_playState = SAMPLE_NONE;
+		play_led_off();
+	}
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Starts playback for the specified sample, by index
 void efx_startSample(uint8_t index)
 {
@@ -121,24 +137,8 @@ void efx_startSample(uint8_t index)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// starts playback of a sample based on it's signature
-void efx_startSampleComplete(uint8_t result)
-{
-	if (SFX_RESULT_SUCCESS == result)
-	{
-		_playState = SAMPLE_PLAYING;
-		play_led_on();
-	}
-	else
-	{
-		_playState = SAMPLE_NONE;
-		play_led_off();
-	}
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // selects a "random" ambient sound to play
-void efx_playAmbient(eventState_t state)
+static void efx_playAmbient(eventState_t state)
 {
 	static uint8_t	next		= 0;
 	static uint8_t	delay		= 0;
@@ -189,7 +189,7 @@ void efx_playAmbient(eventState_t state)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // plays a background sound effect on a schedule
-void efx_playBackground(eventState_t state)
+static void efx_playBackground(eventState_t state)
 {
 	// don't do anything if we are playing a sample
 	if (SAMPLE_NONE != _playState)
@@ -208,7 +208,7 @@ void efx_playBackground(eventState_t state)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // selects a sound effects sequence
-void efx_playSequence(eventState_t state)
+static void efx_playSequence(eventState_t state)
 {
 	static uint8_t	next		= 0;
 	static uint8_t	delay		= 0;
@@ -427,9 +427,9 @@ int efx_init(Events* events)
 	//_events->registerEvent(efx_renderAudioData, 0, 0);
 	if (_header.samples > 0)
 	{
-		_events->registerEvent(efx_playAmbient, 2650, 0);		// plays random ambient sounds
-		_events->registerEvent(efx_playSequence, 1000, 0);	// plays special sound sequences
-		_events->registerEvent(efx_playBackground, 28500, 0);	// plays random background sounds
+		_events->registerEvent(efx_playAmbient, 22500, 0);		// plays random ambient sounds
+		_events->registerEvent(efx_playSequence, 45000, 0);		// plays special sound sequences
+		_events->registerEvent(efx_playBackground, 38000, 0);	// plays random background sounds
 	}
 
 	return _header.samples;
