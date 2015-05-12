@@ -15,7 +15,6 @@
 #include "enterprise.h"
 
 
-
 // playback rate, in Hz
 static const uint16_t	SAMPLE_RATE			= 8000;
 static const uint8_t	SAMPLE_LOADING		= 0xEE;
@@ -33,48 +32,6 @@ static const uint8_t	RT_SOUND			= 0x01;	 // sound effects
 static const uint8_t	RT_LIGHT			= 0x02;	 // lighting effects
 static const uint8_t	RT_MOTION			= 0x04;	 // motion effects
 static const uint8_t	RT_FIXED			= 0x08;	 // fixed schedule (not set implies a random scheduling)
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// Header structure...
-//	0	0x02	2		Signature
-//	1
-//	2	0x04	2		Start Page
-//	3
-//	4	0x06	2		Total Pages
-//	5
-//	6	0x08	1		Bytes Used In Last Page
-//	7			1		Reserved
-//	8	0x0A	2		Sample Rate
-//	9
-//	A	start of next entry...
-
-// SOUND_EFFECT reflects an individual entry in the header record
-typedef struct
-{
-	uint16_t		startPage;				// + 2		2
-	uint32_t		length;					// + 4		4
-} volatile SOUND_EFFECT;					// 6 bytes
-
-// SOUND_HEADER reflects the actual header record
-typedef struct
-{
-	uint16_t          samples;              // + 0	// # of samples (0-255)
-	SOUND_EFFECT      effects[42];          // + 2	// array of sound effects
-} SOUND_HEADER;                    			// 2 + 42 * 6 bytes = 254 bytes
-
-	void renderAudioData(void);
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// Sound effects methods
-void efx_renderAudioData(void);
-int efx_init(Events* events);
-void efx_on(void);
-void efx_off(void);
-uint8_t efx_playing(void);
-void efx_startSample(uint8_t index);
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // ambient sounds
@@ -111,7 +68,65 @@ static const uint8_t SFX_VOICES_SCOTTY_KIRK		= 23;
 static const uint8_t SFX_VOICES_FASCINATING		= 24;
 
 
-const static uint8_t AMBIENT_SOUND[] PROGMEM = {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Sound effects methods
+class SoundEffects
+{
+public:
+	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+	// Header structure...
+	//	0	0x02	2		Signature
+	//	1
+	//	2	0x04	2		Start Page
+	//	3
+	//	4	0x06	2		Total Pages
+	//	5
+	//	6	0x08	1		Bytes Used In Last Page
+	//	7			1		Reserved
+	//	8	0x0A	2		Sample Rate
+	//	9
+	//	A	start of next entry...
+
+	// SOUND_EFFECT reflects an individual entry in the header record
+	typedef struct
+	{
+		uint16_t		startPage;				// + 2		2
+		uint32_t		length;					// + 4		4
+	} volatile SOUND_EFFECT;					// 6 bytes
+
+	// SOUND_HEADER reflects the actual header record
+	typedef struct
+	{
+		uint16_t          samples;              // + 0	// # of samples (0-255)
+		SOUND_EFFECT      effects[42];          // + 2	// array of sound effects
+	} SOUND_HEADER;                    			// 2 + 42 * 6 bytes = 254 bytes
+
+
+	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+	SoundEffects(void);
+	void Render(void);
+	void On(void);
+	void Off(void);
+	void StartSample(uint8_t index);
+	void Init(void);
+	void RegisterEvents(Events & events);
+
+private:
+	void fillHeader(void);
+	void readComplete(uint8_t sfxdata);
+	void startSampleComplete(uint8_t result);
+	void playAmbient(eventState_t state);
+	void playBackground(eventState_t state);
+	void playSequence(eventState_t state);
+
+	SOUND_HEADER   _header;
+	uint8_t        _sample;
+	uint32_t       _length;
+	uint8_t        _playState;
+	uint8_t        _onoff;
+};
+
+const uint8_t AMBIENT_SOUND[] PROGMEM = {
     0x7C, 0x78, 0x75, 0x71, 0x6E, 0x6B, 0x67, 0x65, 0x62, 0x60, 0x5E, 0x5C, 0x5B, 0x5A, 0x5A, 0x5B, 0x5B, 0x5C, 0x5E, 0x5F,
     0x61, 0x63, 0x64, 0x66, 0x67, 0x69, 0x6A, 0x6B, 0x6D, 0x6E, 0x70, 0x72, 0x74, 0x76, 0x78, 0x7A, 0x7D, 0x7F, 0x82, 0x84,
     0x86, 0x88, 0x89, 0x8A, 0x8B, 0x8B, 0x8A, 0x89, 0x87, 0x85, 0x82, 0x7F, 0x7B, 0x78, 0x74, 0x70, 0x6D, 0x6A, 0x68, 0x66,
@@ -254,7 +269,7 @@ const static uint8_t AMBIENT_SOUND[] PROGMEM = {
     0x93, 0x95, 0x97, 0x99, 0x9A, 0x9B, 0x9D, 0x9E, 0x9F, 0xA0, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA6, 0xA7, 0xA7, 0xA7, 0xA6,
     0xA6, 0xA5, 0xA4, 0xA3, 0xA2, 0xA1, 0x9F, 0x9D, 0x9B, 0x99, 0x96, 0x93, 0x90, 0x8D, 0x8A, 0x87, 0x83, 0x81, 0x7D, 0x7D
 };
-static const uint16_t AMBIENT_LEN = sizeof(AMBIENT_SOUND)/sizeof(uint8_t);
+const uint16_t AMBIENT_LEN = sizeof(AMBIENT_SOUND)/sizeof(uint8_t);
 
 
 #endif

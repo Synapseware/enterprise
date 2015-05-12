@@ -15,6 +15,7 @@ RingBuffer uart_rx_buff(uart_buffer, UART_RX_BUFFER / sizeof(char));
 Uart				uart(&uart_rx_buff);
 Events				events(MAX_EVENT_RECORDS);
 Sermem				sermem(&uart, scratch, sizeof(scratch) / sizeof(char));
+SoundEffects		effects;
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -45,7 +46,7 @@ static void checkButton(eventState_t state)
 	//TODO: Button debounce
 
 	// shutdown the CPU and all effects
-	efx_off();
+	effects.Off();
 
 	// shutoff the LEDs
 	dbg_led_off();
@@ -66,7 +67,7 @@ static void checkButton(eventState_t state)
 	events.registerOneShot(enableButton, 8000, EVENT_STATE_NONE);
 
 	// wake back up
-	efx_on();
+	effects.On();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -78,7 +79,7 @@ static void processCommRequest(void)
 		return;
 
 	// shutoff effects while processing request
-	efx_off();
+	effects.Off();
 
 	switch (data & 0x5F)
 	{
@@ -91,18 +92,7 @@ static void processCommRequest(void)
 			break;
 	}
 
-	efx_on();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Initialize the Effects system
-void initEffects(void)
-{
-	// initialize effects
-	uart.write_P(PSTR("Initializing effects header\r\n"));
-	int samples = efx_init(&events);
-	int len = sprintf_P(scratch, PSTR("  Found %d samples on the EEPROM\r\n"), samples);
-	uart.write(scratch, len);
+	effects.On();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -133,6 +123,8 @@ void init(void)
 
 	events.setTimeBase(SAMPLE_RATE);
 
+	effects.Init();
+
 	// setup sleep mode
 	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 	sleep_enable();
@@ -145,6 +137,8 @@ void init(void)
 
 	events.registerHighPriorityEvent(fadeStatusLed, 0, EVENT_STATE_NONE);
 	events.registerEvent(readNextStatusVal, 700, EVENT_STATE_NONE);
+
+	effects.RegisterEvents(events);
 
 	// enable all interrupts
 	sei();
@@ -159,10 +153,8 @@ int main()
 	uart.write_P(PSTR("Enterprise main board booting up.\r\n"));
 	sermem.showHelp();
 
-	initEffects();
-
-	efx_on();
-	efx_startSample(SFX_EFX_OPENING);
+	effects.On();
+	effects.StartSample(SFX_EFX_OPENING);
 
 	while(1)
 	{
@@ -179,7 +171,7 @@ int main()
 ISR(TIMER1_COMPA_vect)
 {
 	// play audio data
-	efx_renderAudioData();
+	effects.Render();
 
 	// trigger event cycle
 	events.sync();

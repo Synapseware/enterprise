@@ -2,17 +2,21 @@
 
 
 
-static Events *       _events;
-static SOUND_HEADER   _header;
-static uint8_t        _sample;
-static uint32_t       _length;
-static uint8_t        _playState;
-static uint8_t        _onoff;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Constructor
+SoundEffects::SoundEffects(void)
+{
+	_sample		 		= 0;
+	_length		 		= 0;
+	_playState	  		= 0;
+	_onoff				= 0;
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Fills the header object with data
-static void fillHeader(void)
+void SoundEffects::fillHeader(void)
 {
 	// load the header into the header struct
 	memset(&_header, 0, sizeof(SOUND_HEADER));
@@ -25,7 +29,7 @@ static void fillHeader(void)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-static void efx_readComplete(uint8_t sfxdata)
+void SoundEffects::readComplete(uint8_t sfxdata)
 {
 
 	_sample = sfxdata;
@@ -34,7 +38,7 @@ static void efx_readComplete(uint8_t sfxdata)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Runs on the 8kHz event handler to play back PWM audio!
-void efx_renderAudioData(void)
+void SoundEffects::Render(void)
 {
 	static uint16_t ambientPos = 0;
 
@@ -60,7 +64,7 @@ void efx_renderAudioData(void)
 		_length--;
 
 		// read the next sample value as long as we have data to read
-		ee_readA(&efx_readComplete);
+		ee_readA(readComplete);
 	}
 	else
 	{
@@ -82,7 +86,7 @@ void efx_renderAudioData(void)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // enables all sound effects
-void efx_on(void)
+void SoundEffects::On(void)
 {
 	_onoff = SFX_ON;
 	ampPwr_on();
@@ -90,22 +94,15 @@ void efx_on(void)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // disables all sound effects
-void efx_off(void)
+void SoundEffects::Off(void)
 {
 	_onoff = SFX_OFF;
 	ampPwr_off();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-uint8_t efx_playing(void)
-{
-
-	return _playState;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // starts playback of a sample based on it's signature
-static void efx_startSampleComplete(uint8_t result)
+void SoundEffects::startSampleComplete(uint8_t result)
 {
 	if (SFX_RESULT_SUCCESS == result)
 	{
@@ -121,7 +118,7 @@ static void efx_startSampleComplete(uint8_t result)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // Starts playback for the specified sample, by index
-void efx_startSample(uint8_t index)
+void SoundEffects::StartSample(uint8_t index)
 {
 	// don't do anything if we are playing a sample
 	if (SAMPLE_NONE != _playState || 0 == _header.samples)
@@ -134,12 +131,12 @@ void efx_startSample(uint8_t index)
 	// setup for sample playback
 	_playState = SAMPLE_LOADING;
 	_length	= _header.effects[index].length;
-	ee_setpageA(_header.effects[index].startPage, &efx_startSampleComplete);
+	ee_setpageA(_header.effects[index].startPage, SoundEffects::startSampleComplete);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // selects a "random" ambient sound to play
-static void efx_playAmbient(eventState_t state)
+void SoundEffects::playAmbient(eventState_t state)
 {
 	static uint8_t	next		= 0;
 	static uint8_t	delay		= 0;
@@ -171,16 +168,16 @@ static void efx_playAmbient(eventState_t state)
 	switch (idx)
 	{
 		case 0:
-			efx_startSample(SFX_AMBIENT_BEEP_BEEP);
+			StartSample(SFX_AMBIENT_BEEP_BEEP);
 			break;
 		case 1:
-			efx_startSample(SFX_AMBIENT_BEEP_UP);
+			StartSample(SFX_AMBIENT_BEEP_UP);
 			break;
 		case 2:
-			efx_startSample(SFX_AMBIENT_KEY_BEEP);
+			StartSample(SFX_AMBIENT_KEY_BEEP);
 			break;
 		case 3:
-			efx_startSample(SFX_AMBIENT_WHIP_WHIP);
+			StartSample(SFX_AMBIENT_WHIP_WHIP);
 			break;
 	}
 
@@ -190,7 +187,7 @@ static void efx_playAmbient(eventState_t state)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // plays a background sound effect on a schedule
-static void efx_playBackground(eventState_t state)
+void SoundEffects::playBackground(eventState_t state)
 {
 	// don't do anything if we are playing a sample
 	if (SAMPLE_NONE != _playState)
@@ -199,17 +196,17 @@ static void efx_playBackground(eventState_t state)
 	switch (TCNT2 & 0x01)
 	{
 		case 0:
-			efx_startSample(SFX_BK_ASTROGATOR);
+			StartSample(SFX_BK_ASTROGATOR);
 			break;
 		case 1:
-			efx_startSample(SFX_BK_MAIN_SCREEN);
+			StartSample(SFX_BK_MAIN_SCREEN);
 			break;
 	}
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
 // selects a sound effects sequence
-static void efx_playSequence(eventState_t state)
+void SoundEffects::playSequence(eventState_t state)
 {
 	static uint8_t	next		= 0;
 	static uint8_t	delay		= 0;
@@ -267,119 +264,119 @@ static void efx_playSequence(eventState_t state)
 	{
 		// kirk-beam-up sequence
 		case 1:
-			efx_startSample(SFX_EFX_HAILING);
+			StartSample(SFX_EFX_HAILING);
 			next++;
 			break;
 		case 2:
-			efx_startSample(SFX_VOICES_SCOTTY_KIRK);
+			StartSample(SFX_VOICES_SCOTTY_KIRK);
 			next++;
 			break;
 		case 3:
-			efx_startSample(SFX_VOICES_BEAM_ME_UP);
+			StartSample(SFX_VOICES_BEAM_ME_UP);
 			next++;
 			break;
 		case 4:
-			efx_startSample(SFX_VOICES_AYE_SIR);
+			StartSample(SFX_VOICES_AYE_SIR);
 			next++;
 			break;
 		case 5:
-			efx_startSample(SFX_EFX_ENERGIZE);
+			StartSample(SFX_EFX_ENERGIZE);
 			next = 0;
 			break;
 
 		// tribble sequence
 		case 10:
-			efx_startSample(SFX_EFX_TRIBBLE);
+			StartSample(SFX_EFX_TRIBBLE);
 			next++;
 			break;
 		case 11:
-			efx_startSample(SFX_EFX_RED_ALERT);
+			StartSample(SFX_EFX_RED_ALERT);
 			next++;
 			break;
 		case 12:
-			efx_startSample(SFX_EFX_TRIBBLE);
+			StartSample(SFX_EFX_TRIBBLE);
 			next++;
 			break;
 		case 13:
-			efx_startSample(SFX_EFX_RED_ALERT);
+			StartSample(SFX_EFX_RED_ALERT);
 			next++;
 			break;
 		case 14:
-			efx_startSample(SFX_VOICES_FASCINATING);
+			StartSample(SFX_VOICES_FASCINATING);
 			next = 0;
 			break;
 
 		// heart beat + bones as a doctor
 		case 20:
-			efx_startSample(SFX_EFX_HEART);
+			StartSample(SFX_EFX_HEART);
 			next++;
 			break;
 		case 21:
-			efx_startSample(SFX_EFX_HEART);
+			StartSample(SFX_EFX_HEART);
 			next++;
 			break;
 		case 22:
-			efx_startSample(SFX_EFX_HEART);
+			StartSample(SFX_EFX_HEART);
 			next++;
 			break;
 		case 23:
-			efx_startSample(SFX_VOICES_IMPOSSIBLE);
+			StartSample(SFX_VOICES_IMPOSSIBLE);
 			next++;
 			break;
 		case 24:
-			efx_startSample(SFX_VOICES_WHAT_DO);
+			StartSample(SFX_VOICES_WHAT_DO);
 			next = 0;
 		break;
 
 		// hailing kirk sequence
 		case 30:
-			efx_startSample(SFX_EFX_HAILING);
+			StartSample(SFX_EFX_HAILING);
 			next++;
 			break;
 		case 31:
-			efx_startSample(SFX_VOICES_BRIDGE_KIRK);
+			StartSample(SFX_VOICES_BRIDGE_KIRK);
 			next++;
 			break;
 		case 32:
-			efx_startSample(SFX_EFX_COMM);
+			StartSample(SFX_EFX_COMM);
 			next++;
 			break;
 		case 33:
-			efx_startSample(SFX_VOICES_KIRK_HERE);
+			StartSample(SFX_VOICES_KIRK_HERE);
 			next = 0;
 			break;
 
 		// going down
 		case 40:
-			efx_startSample(SFX_EFX_RED_ALERT);
+			StartSample(SFX_EFX_RED_ALERT);
 			next++;
 			break;
 		case 41:
-			efx_startSample(SFX_EFX_RED_ALERT);
+			StartSample(SFX_EFX_RED_ALERT);
 			next++;
 			break;
 		case 42:
-			efx_startSample(SFX_VOICES_GOING_DOWN);
+			StartSample(SFX_VOICES_GOING_DOWN);
 			next = 0;
 			break;
 
 		// medically impossible, his brain is gone	
 		case 50:
-			efx_startSample(SFX_EFX_HEART);
+			StartSample(SFX_EFX_HEART);
 			next++;
 		case 51:
-			efx_startSample(SFX_EFX_HEART);
+			StartSample(SFX_EFX_HEART);
 			next++;
 			break;
 		case 52:
-			efx_startSample(SFX_VOICES_IMPOSSIBLE);
+			StartSample(SFX_VOICES_IMPOSSIBLE);
 			next++;
 			break;
 		case 53:
-			efx_startSample(SFX_EFX_HEART);
+			StartSample(SFX_EFX_HEART);
 			next++;
 		case 54:
-			efx_startSample(SFX_EFX_HEART);
+			StartSample(SFX_EFX_HEART);
 			next = 0;
 			break;
 
@@ -396,19 +393,24 @@ static void efx_playSequence(eventState_t state)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
-// Initializes the global effects variables and primary effects events
-int efx_init(Events* events)
+// Register the SoundEffects events
+void SoundEffects::RegisterEvents(Events & events)
 {
-	_events				= events;
-	_sample		 		= 0;
-	_length		 		= 0;
-	_playState	  		= 0;
-	_onoff				= 0;
+	if (_header.samples < 1)
+		return;
 
+	events.registerEvent(playAmbient, 22500, 0);		// plays random ambient sounds
+	events.registerEvent(playSequence, 10000, 0);		// plays special sound sequences
+	events.registerEvent(playBackground, 38000, 0);		// plays random background sounds
+}
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  - -
+// Initializes the global effects variables and primary effects events
+void SoundEffects::Init(void)
+{
 	audioOut_en();
 	ampPwr_en();
-	efx_off();
+	Off();
 
 	_playState		= SAMPLE_NONE;
 
@@ -423,15 +425,4 @@ int efx_init(Events* events)
 
 	// load the header data
 	fillHeader();
-
-
-	// register SFX handlers if there's valid data
-	if (_header.samples > 0)
-	{
-		_events->registerEvent(efx_playAmbient, 22500, 0);		// plays random ambient sounds
-		_events->registerEvent(efx_playSequence, 10000, 0);		// plays special sound sequences
-		_events->registerEvent(efx_playBackground, 38000, 0);	// plays random background sounds
-	}
-
-	return _header.samples;
 }
